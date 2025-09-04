@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,10 +38,10 @@ interface InvoiceData {
   id: string;
   invoice_number: string;
   invoice_date: string | null;
-  due_date: string | null;
   vendor_name: string;
   vendor_address: string | null;
   customer_name: string | null;
+  payment_method: string | null;
   subtotal: number;
   tax_amount: number;
   total_amount: number;
@@ -62,6 +63,7 @@ interface Invoice {
   id: string;
   original_file_url: string;
   original_file_name: string;
+  file_type: string;
   processing_status: string;
   page_count: number;
   created_at: string;
@@ -137,9 +139,9 @@ export default function InvoiceDetailPage() {
         if (extractedData.raw_ocr_data && !extractedData.subtotal) {
           const ocrData = extractedData.raw_ocr_data;
           populatedData.invoice_date = populatedData.invoice_date || ocrData.invoice_date || null;
-          populatedData.due_date = populatedData.due_date || ocrData.due_date || null;
           populatedData.vendor_address = populatedData.vendor_address || ocrData.vendor_address || null;
           populatedData.customer_name = populatedData.customer_name || ocrData.customer_name || null;
+          populatedData.payment_method = populatedData.payment_method || ocrData.payment_method || null;
           populatedData.subtotal = populatedData.subtotal || ocrData.subtotal || 0;
           populatedData.tax_amount = populatedData.tax_amount || ocrData.tax_amount || 0;
           populatedData.total_amount = populatedData.total_amount || ocrData.total_amount || 0;
@@ -178,8 +180,8 @@ export default function InvoiceDetailPage() {
         ...(invoiceData.raw_ocr_data || {}),
         invoice_number: invoiceData.invoice_number,
         invoice_date: invoiceData.invoice_date,
-        due_date: invoiceData.due_date,
         vendor_name: invoiceData.vendor_name,
+        payment_method: invoiceData.payment_method,
         vendor_address: invoiceData.vendor_address,
         customer_name: invoiceData.customer_name,
         subtotal: invoiceData.subtotal,
@@ -195,8 +197,8 @@ export default function InvoiceDetailPage() {
         .update({
           invoice_number: invoiceData.invoice_number,
           invoice_date: invoiceData.invoice_date,
-          due_date: invoiceData.due_date,
           vendor_name: invoiceData.vendor_name,
+          payment_method: invoiceData.payment_method,
           vendor_address: invoiceData.vendor_address,
           customer_name: invoiceData.customer_name,
           subtotal: invoiceData.subtotal,
@@ -388,17 +390,23 @@ export default function InvoiceDetailPage() {
           <CardContent>
             <div className="bg-gray-100 rounded-lg p-4 overflow-auto" style={{ maxHeight: '80vh' }}>
               {fileUrl ? (
-                invoice.original_file_type && invoice.original_file_type.startsWith('image/') ? (
-                  // For images, use img tag with responsive sizing
-                  <div className="flex items-center justify-center">
-                    <img
+                invoice.file_type && invoice.file_type.startsWith('image/') ? (
+                  // For images, use Next.js Image component with responsive sizing
+                  <div className="flex items-center justify-center relative" style={{ maxHeight: '70vh' }}>
+                    <Image
                       src={fileUrl}
                       alt="Invoice"
-                      className="max-w-full h-auto rounded shadow-lg"
+                      width={800}
+                      height={1000}
+                      className="rounded shadow-lg"
                       style={{ 
+                        width: 'auto',
+                        height: 'auto',
+                        maxWidth: '100%',
                         maxHeight: '70vh',
                         objectFit: 'contain'
                       }}
+                      priority
                     />
                   </div>
                 ) : (
@@ -506,16 +514,16 @@ export default function InvoiceDetailPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="due_date">
-                        <Calendar className="inline h-3 w-3 mr-1" />
-                        Due Date
+                      <Label htmlFor="payment_method">
+                        <CreditCard className="inline h-3 w-3 mr-1" />
+                        Payment Method
                       </Label>
                       <Input
-                        id="due_date"
-                        type="date"
-                        value={invoiceData.due_date || ''}
-                        onChange={(e) => setInvoiceData({...invoiceData, due_date: e.target.value})}
+                        id="payment_method"
+                        value={invoiceData.payment_method || ''}
+                        onChange={(e) => setInvoiceData({...invoiceData, payment_method: e.target.value})}
                         disabled={!isEditing}
+                        placeholder="e.g., Credit Card, Cash, Check, Bank Transfer"
                       />
                     </div>
                   </div>

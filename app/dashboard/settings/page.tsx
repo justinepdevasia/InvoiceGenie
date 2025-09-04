@@ -60,18 +60,6 @@ interface UserSettings {
     twoFactorEnabled: boolean
     lastPasswordChange: string
     activeSessions: number
-    apiKeys: Array<{
-      id: string
-      name: string
-      lastUsed: string
-      created: string
-    }>
-  }
-  integrations: {
-    quickbooks: boolean
-    xero: boolean
-    slack: boolean
-    zapier: boolean
   }
 }
 
@@ -129,28 +117,8 @@ export default function SettingsPage() {
         security: {
           twoFactorEnabled: userSettings?.two_factor_enabled ?? false,
           lastPasswordChange: userSettings?.last_password_change || new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
-          activeSessions: 3,
-          apiKeys: [
-            {
-              id: '1',
-              name: 'Production API',
-              lastUsed: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-              created: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-            },
-            {
-              id: '2',
-              name: 'Development API',
-              lastUsed: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-              created: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
-            }
-          ]
+          activeSessions: 3
         },
-        integrations: {
-          quickbooks: userSettings?.quickbooks_enabled ?? false,
-          xero: userSettings?.xero_enabled ?? false,
-          slack: userSettings?.slack_enabled ?? false,
-          zapier: userSettings?.zapier_enabled ?? false
-        }
       }
 
       setSettings(mockSettings)
@@ -222,22 +190,6 @@ export default function SettingsPage() {
     }
   }
 
-  const generateApiKey = () => {
-    const newKey = `sk_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`
-    alert(`New API Key: ${newKey}\n\nMake sure to copy this key now. You won't be able to see it again!`)
-  }
-
-  const deleteApiKey = (id: string) => {
-    if (confirm('Are you sure you want to delete this API key?')) {
-      setSettings(prev => prev ? {
-        ...prev,
-        security: {
-          ...prev.security,
-          apiKeys: prev.security.apiKeys.filter(key => key.id !== id)
-        }
-      } : null)
-    }
-  }
 
   const exportData = () => {
     alert('Preparing your data export. You will receive an email when it\'s ready.')
@@ -269,8 +221,6 @@ export default function SettingsPage() {
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="preferences">Preferences</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="integrations">Integrations</TabsTrigger>
-          <TabsTrigger value="api">API</TabsTrigger>
           <TabsTrigger value="data">Data & Privacy</TabsTrigger>
         </TabsList>
 
@@ -669,125 +619,6 @@ export default function SettingsPage() {
               </div>
               <Button variant="outline" className="w-full">
                 Sign Out All Other Sessions
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="integrations" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Connected Services</CardTitle>
-              <CardDescription>
-                Manage your integrations with third-party services
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <Building className="h-5 w-5 text-green-600" />
-                  <div>
-                    <p className="font-medium">QuickBooks</p>
-                    <p className="text-sm text-muted-foreground">
-                      {settings?.integrations.quickbooks ? 'Connected' : 'Not connected'}
-                    </p>
-                  </div>
-                </div>
-                <Switch
-                  checked={settings?.integrations.quickbooks}
-                  onCheckedChange={(checked) => setSettings(prev => prev ? {
-                    ...prev,
-                    integrations: { ...prev.integrations, quickbooks: checked }
-                  } : null)}
-                />
-              </div>
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <Building className="h-5 w-5 text-blue-600" />
-                  <div>
-                    <p className="font-medium">Xero</p>
-                    <p className="text-sm text-muted-foreground">
-                      {settings?.integrations.xero ? 'Connected' : 'Not connected'}
-                    </p>
-                  </div>
-                </div>
-                <Switch
-                  checked={settings?.integrations.xero}
-                  onCheckedChange={(checked) => setSettings(prev => prev ? {
-                    ...prev,
-                    integrations: { ...prev.integrations, xero: checked }
-                  } : null)}
-                />
-              </div>
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <Building className="h-5 w-5 text-purple-600" />
-                  <div>
-                    <p className="font-medium">Slack</p>
-                    <p className="text-sm text-muted-foreground">
-                      {settings?.integrations.slack ? 'Connected' : 'Not connected'}
-                    </p>
-                  </div>
-                </div>
-                <Switch
-                  checked={settings?.integrations.slack}
-                  onCheckedChange={(checked) => setSettings(prev => prev ? {
-                    ...prev,
-                    integrations: { ...prev.integrations, slack: checked }
-                  } : null)}
-                />
-              </div>
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <Building className="h-5 w-5 text-orange-600" />
-                  <div>
-                    <p className="font-medium">Zapier</p>
-                    <p className="text-sm text-muted-foreground">
-                      {settings?.integrations.zapier ? 'Connected' : 'Not connected'}
-                    </p>
-                  </div>
-                </div>
-                <Switch
-                  checked={settings?.integrations.zapier}
-                  onCheckedChange={(checked) => setSettings(prev => prev ? {
-                    ...prev,
-                    integrations: { ...prev.integrations, zapier: checked }
-                  } : null)}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="api" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>API Keys</CardTitle>
-              <CardDescription>
-                Manage your API keys for programmatic access
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {settings?.security.apiKeys.map((key) => (
-                <div key={key.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div>
-                    <p className="font-medium">{key.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Last used: {new Date(key.lastUsed).toLocaleString()}
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => deleteApiKey(key.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-              <Button onClick={generateApiKey} className="w-full">
-                <Key className="h-4 w-4 mr-2" />
-                Generate New API Key
               </Button>
             </CardContent>
           </Card>

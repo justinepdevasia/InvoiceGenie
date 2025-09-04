@@ -60,8 +60,7 @@ interface Invoice {
   amount: number
   currency: string
   invoice_date: string
-  due_date: string
-  status: 'pending' | 'processing' | 'completed' | 'failed' | 'paid' | 'overdue'
+  status: 'pending' | 'processing' | 'completed' | 'failed'
   file_name: string
   created_at: string
   confidence_score: number
@@ -107,7 +106,6 @@ export default function InvoicesPage() {
             total_amount,
             currency,
             invoice_date,
-            due_date,
             confidence_score
           )
         `)
@@ -124,7 +122,6 @@ export default function InvoicesPage() {
         amount: inv.invoice_data?.[0]?.total_amount || 0,
         currency: inv.invoice_data?.[0]?.currency || 'USD',
         invoice_date: inv.invoice_data?.[0]?.invoice_date || inv.created_at,
-        due_date: inv.invoice_data?.[0]?.due_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         status: determineStatus(inv),
         file_name: inv.original_file_name,
         created_at: inv.created_at,
@@ -143,12 +140,7 @@ export default function InvoicesPage() {
   const determineStatus = (invoice: any): Invoice['status'] => {
     if (invoice.processing_status === 'failed') return 'failed'
     if (invoice.processing_status === 'processing') return 'processing'
-    if (invoice.processing_status === 'completed') {
-      const dueDate = new Date(invoice.invoice_data?.[0]?.due_date || Date.now())
-      if (dueDate < new Date()) return 'overdue'
-      if (invoice.payment_status === 'paid') return 'paid'
-      return 'completed'
-    }
+    if (invoice.processing_status === 'completed') return 'completed'
     return 'pending'
   }
 
@@ -265,14 +257,10 @@ export default function InvoicesPage() {
     switch (status) {
       case 'completed':
         return <CheckCircle className="h-4 w-4 text-green-500" />
-      case 'paid':
-        return <CheckCircle className="h-4 w-4 text-blue-500" />
       case 'processing':
         return <Clock className="h-4 w-4 text-yellow-500" />
       case 'pending':
         return <Clock className="h-4 w-4 text-gray-500" />
-      case 'overdue':
-        return <AlertCircle className="h-4 w-4 text-orange-500" />
       case 'failed':
         return <XCircle className="h-4 w-4 text-red-500" />
     }
@@ -281,10 +269,8 @@ export default function InvoicesPage() {
   const getStatusBadge = (status: Invoice['status']) => {
     const variants: Record<Invoice['status'], 'default' | 'secondary' | 'destructive' | 'outline'> = {
       completed: 'default',
-      paid: 'default',
       processing: 'secondary',
       pending: 'outline',
-      overdue: 'destructive',
       failed: 'destructive'
     }
     return <Badge variant={variants[status]}>{status}</Badge>
@@ -467,7 +453,6 @@ export default function InvoicesPage() {
                   <TableHead>Vendor</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Date</TableHead>
-                  <TableHead>Due Date</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -506,9 +491,6 @@ export default function InvoicesPage() {
                     </TableCell>
                     <TableCell>
                       {format(new Date(invoice.invoice_date), 'MMM d, yyyy')}
-                    </TableCell>
-                    <TableCell>
-                      {format(new Date(invoice.due_date), 'MMM d, yyyy')}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">

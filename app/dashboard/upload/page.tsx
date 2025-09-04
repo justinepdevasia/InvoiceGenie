@@ -323,9 +323,7 @@ function UploadPageContent() {
           <div className="flex gap-4">
             <Select value={selectedProject} onValueChange={setSelectedProject}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a project">
-                  {selectedProject ? projects.find(p => p.id === selectedProject)?.name : 'Select a project'}
-                </SelectValue>
+                <SelectValue placeholder={selectedProject ? projects.find(p => p.id === selectedProject)?.name || 'Select a project' : 'Select a project'} />
               </SelectTrigger>
               <SelectContent>
                 {projects.map(project => (

@@ -438,7 +438,7 @@ export default function InvoiceDetailPage() {
                         )}
                       </Badge>
                       <Badge variant="outline">
-                        Confidence: {invoiceData.confidence_score.toFixed(0)}%
+                        Confidence: {(invoiceData.confidence_score * 100).toFixed(0)}%
                       </Badge>
                     </div>
                   </div>

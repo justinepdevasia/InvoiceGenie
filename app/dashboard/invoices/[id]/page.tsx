@@ -173,7 +173,23 @@ export default function InvoiceDetailPage() {
 
     setIsSaving(true);
     try {
-      // Update invoice data
+      // Create updated raw_ocr_data JSON with all current values
+      const updatedRawData = {
+        ...(invoiceData.raw_ocr_data || {}),
+        invoice_number: invoiceData.invoice_number,
+        invoice_date: invoiceData.invoice_date,
+        due_date: invoiceData.due_date,
+        vendor_name: invoiceData.vendor_name,
+        vendor_address: invoiceData.vendor_address,
+        customer_name: invoiceData.customer_name,
+        subtotal: invoiceData.subtotal,
+        tax_amount: invoiceData.tax_amount,
+        total_amount: invoiceData.total_amount,
+        currency: invoiceData.currency,
+        line_items: lineItems // Include updated line items in JSON
+      };
+
+      // Update invoice data with both structured fields AND raw_ocr_data JSON
       const { error: updateError } = await supabase
         .from('invoice_data')
         .update({
@@ -187,6 +203,7 @@ export default function InvoiceDetailPage() {
           tax_amount: invoiceData.tax_amount,
           total_amount: invoiceData.total_amount,
           currency: invoiceData.currency,
+          raw_ocr_data: updatedRawData, // Update JSON too to keep in sync
           is_verified: true
         })
         .eq('id', invoiceData.id);

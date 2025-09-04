@@ -285,11 +285,11 @@ export default function InvoicesPage() {
 
   // Summary stats
   const totalAmount = filteredInvoices.reduce((sum, inv) => sum + inv.amount, 0)
-  const paidAmount = filteredInvoices
-    .filter(inv => inv.status === 'paid')
+  const completedAmount = filteredInvoices
+    .filter(inv => inv.status === 'completed')
     .reduce((sum, inv) => sum + inv.amount, 0)
-  const overdueAmount = filteredInvoices
-    .filter(inv => inv.status === 'overdue')
+  const processingAmount = filteredInvoices
+    .filter(inv => inv.status === 'processing')
     .reduce((sum, inv) => sum + inv.amount, 0)
 
   if (loading) {
@@ -345,26 +345,26 @@ export default function InvoicesPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Paid</CardTitle>
+            <CardTitle className="text-sm font-medium">Completed</CardTitle>
             <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${paidAmount.toFixed(2)}</div>
+            <div className="text-2xl font-bold">${completedAmount.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
-              {filteredInvoices.filter(inv => inv.status === 'paid').length} invoices
+              {filteredInvoices.filter(inv => inv.status === 'completed').length} invoices
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Overdue</CardTitle>
-            <TrendingDown className="h-4 w-4 text-red-500" />
+            <CardTitle className="text-sm font-medium">Processing</CardTitle>
+            <TrendingDown className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${overdueAmount.toFixed(2)}</div>
+            <div className="text-2xl font-bold">${processingAmount.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
-              {filteredInvoices.filter(inv => inv.status === 'overdue').length} invoices
+              {filteredInvoices.filter(inv => inv.status === 'processing').length} invoices
             </p>
           </CardContent>
         </Card>

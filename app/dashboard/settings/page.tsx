@@ -152,10 +152,6 @@ export default function SettingsPage() {
           currency: settings.preferences.currency,
           timezone: settings.preferences.timezone,
           two_factor_enabled: settings.security.twoFactorEnabled,
-          quickbooks_enabled: settings.integrations.quickbooks,
-          xero_enabled: settings.integrations.xero,
-          slack_enabled: settings.integrations.slack,
-          zapier_enabled: settings.integrations.zapier,
           updated_at: new Date().toISOString()
         })
 

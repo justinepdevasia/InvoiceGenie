@@ -326,7 +326,16 @@ export async function POST(request: NextRequest) {
         invoice_id: invoiceId,
         invoice_number: extractedData.invoice_number || 'Unknown',
         vendor_name: extractedData.vendor_name || 'Unknown Vendor',
+        total_amount: extractedData.total_amount || extractedData.total || extractedData.amount || 0,
+        subtotal: extractedData.subtotal || 0,
+        tax_amount: extractedData.tax_amount || extractedData.tax || 0,
         currency: extractedData.currency || 'USD',
+        invoice_date: extractedData.invoice_date || null,
+        due_date: extractedData.due_date || null,
+        customer_name: extractedData.customer_name || null,
+        customer_address: extractedData.customer_address || null,
+        vendor_address: extractedData.vendor_address || null,
+        payment_terms: extractedData.payment_terms || null,
         raw_ocr_data: extractedData, // Store all extracted data in JSON field
         confidence_score: confidenceScore,
         is_verified: false

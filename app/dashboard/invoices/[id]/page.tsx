@@ -386,20 +386,40 @@ export default function InvoiceDetailPage() {
             <CardTitle>Document Preview</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="bg-gray-100 rounded-lg p-4 min-h-[600px] flex items-center justify-center">
+            <div className="bg-gray-100 rounded-lg p-4 overflow-auto" style={{ maxHeight: '80vh' }}>
               {fileUrl ? (
-                <iframe
-                  src={fileUrl}
-                  className="w-full h-[600px] rounded"
-                  title="Invoice Preview"
-                />
+                invoice.original_file_type && invoice.original_file_type.startsWith('image/') ? (
+                  // For images, use img tag with responsive sizing
+                  <div className="flex items-center justify-center">
+                    <img
+                      src={fileUrl}
+                      alt="Invoice"
+                      className="max-w-full h-auto rounded shadow-lg"
+                      style={{ 
+                        maxHeight: '70vh',
+                        objectFit: 'contain'
+                      }}
+                    />
+                  </div>
+                ) : (
+                  // For PDFs and other documents, use iframe
+                  <iframe
+                    src={fileUrl}
+                    className="w-full rounded"
+                    style={{ 
+                      height: '70vh',
+                      minHeight: '500px'
+                    }}
+                    title="Invoice Preview"
+                  />
+                )
               ) : invoice.original_file_url ? (
-                <div className="text-center">
+                <div className="text-center py-20">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
                   <p className="text-gray-500">Loading preview...</p>
                 </div>
               ) : (
-                <div className="text-center">
+                <div className="text-center py-20">
                   <FileText className="h-12 w-12 text-gray-400 mx-auto mb-2" />
                   <p className="text-gray-500">Preview not available</p>
                 </div>

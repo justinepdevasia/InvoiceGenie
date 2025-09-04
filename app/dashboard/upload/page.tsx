@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -37,7 +37,7 @@ interface Project {
   name: string;
 }
 
-export default function UploadPage() {
+function UploadPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [files, setFiles] = useState<FileWithPreview[]>([]);
@@ -460,5 +460,13 @@ export default function UploadPage() {
         </Alert>
       )}
     </div>
+  );
+}
+
+export default function UploadPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <UploadPageContent />
+    </Suspense>
   );
 }

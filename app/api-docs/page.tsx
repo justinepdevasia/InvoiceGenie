@@ -553,11 +553,11 @@ async function processInvoice(invoiceId) {
                                     ? <div className="ml-4 mt-1">
                                         {Object.entries(value).map(([subKey, subValue]) => (
                                           <div key={subKey}>
-                                            <code className="text-blue-600">{subKey}</code>: {subValue}
+                                            <code className="text-blue-600">{subKey}</code>: {String(subValue)}
                                           </div>
                                         ))}
                                       </div>
-                                    : value
+                                    : String(value)
                                 }
                               </div>
                             ))}

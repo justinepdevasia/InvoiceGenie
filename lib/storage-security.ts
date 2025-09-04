@@ -1,4 +1,3 @@
-import { createClient } from '@/lib/supabase/server';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 /**
@@ -165,37 +164,3 @@ export async function checkBucketSecurity(
   }
 }
 
-/**
- * Initialize storage bucket with proper security settings
- */
-export async function initializeSecureStorage(
-  projectId: string
-): Promise<{ success: boolean; message: string }> {
-  try {
-    const supabase = await createClient();
-    
-    // This function would typically be called during setup
-    // The actual bucket creation and RLS policies are managed through Supabase dashboard
-    // or through migrations
-    
-    const securityCheck = await checkBucketSecurity(supabase);
-    
-    if (!securityCheck.isSecure) {
-      return {
-        success: false,
-        message: `Security issues found: ${securityCheck.issues.join(', ')}`
-      };
-    }
-    
-    return {
-      success: true,
-      message: 'Storage is properly secured'
-    };
-  } catch (error) {
-    console.error('Error initializing secure storage:', error);
-    return {
-      success: false,
-      message: 'Failed to initialize secure storage'
-    };
-  }
-}

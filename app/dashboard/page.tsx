@@ -12,7 +12,14 @@ import { FileText, FolderOpen, Upload, TrendingUp, Plus, ArrowRight, CreditCard 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<{
+    totalProjects: number;
+    totalInvoices: number;
+    pagesUsed: number;
+    pagesLimit: number;
+    recentProjects: any[];
+    recentInvoices: any[];
+  }>({
     totalProjects: 0,
     totalInvoices: 0,
     pagesUsed: 0,

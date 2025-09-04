@@ -427,7 +427,7 @@ export default function InvoiceDetailPage() {
                   <div className="flex justify-between items-center">
                     <CardTitle>Invoice Information</CardTitle>
                     <div className="flex gap-2">
-                      <Badge variant={invoiceData.is_verified ? "success" : "secondary"}>
+                      <Badge variant={invoiceData.is_verified ? "default" : "secondary"}>
                         {invoiceData.is_verified ? (
                           <>
                             <CheckCircle className="mr-1 h-3 w-3" />

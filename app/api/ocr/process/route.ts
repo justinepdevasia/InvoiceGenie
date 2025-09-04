@@ -350,7 +350,7 @@ export async function POST(request: NextRequest) {
 
     // Store line items if present (line items are also stored in raw_ocr_data JSON)
     if (extractedData.line_items && Array.isArray(extractedData.line_items)) {
-      const lineItems = extractedData.line_items.map((item, index) => ({
+      const lineItems = extractedData.line_items.map((item: any, index: number) => ({
         invoice_data_id: invoiceData.id,
         item_number: index + 1,
         description: item.description || 'Item',

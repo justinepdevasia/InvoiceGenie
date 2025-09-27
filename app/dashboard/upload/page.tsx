@@ -136,7 +136,7 @@ function UploadPageContent() {
           console.log('File size:', fileWrapper.size);
           console.log('File type:', fileWrapper.type);
           
-          const fileName = `${user.id}/${Date.now()}-${fileWrapper.name}`;
+          const fileName = `${user.id}/${selectedProject}/${Date.now()}-${fileWrapper.name}`;
           
           // Upload to Supabase storage
           let filePath = fileName;

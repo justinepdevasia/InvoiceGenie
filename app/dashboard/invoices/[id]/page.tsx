@@ -356,31 +356,6 @@ export default function InvoiceDetailPage() {
               )}
             </>
           )}
-          <Button 
-            variant="outline"
-            onClick={async () => {
-              try {
-                const response = await fetch(`/api/export/csv?invoice=${params.id}&format=full`);
-                if (!response.ok) throw new Error('Export failed');
-                
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `invoice-${invoiceData?.invoice_number || params.id}.csv`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-              } catch (error) {
-                console.error('Export error:', error);
-                alert('Failed to export CSV');
-              }
-            }}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Export CSV
-          </Button>
         </div>
       </div>
 
@@ -431,32 +406,15 @@ export default function InvoiceDetailPage() {
                         console.error('PDF failed to load in iframe');
                       }}
                     />
-                    <div className="absolute top-2 right-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => window.open(fileUrl, '_blank')}
-                        className="bg-white/90"
-                      >
-                        Open PDF
-                      </Button>
-                    </div>
                   </div>
                 ) : (
-                  // For other file types, show download option
+                  // For other file types, show file info
                   <div className="text-center py-20">
                     <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <p className="text-lg font-medium mb-2">Document Preview</p>
-                    <p className="text-gray-500 mb-4">
+                    <p className="text-lg font-medium mb-2">Document Available</p>
+                    <p className="text-gray-500">
                       {invoice.file_type} • {invoice.original_file_name}
                     </p>
-                    <Button
-                      onClick={() => window.open(fileUrl, '_blank')}
-                      variant="outline"
-                    >
-                      <Download className="mr-2 h-4 w-4" />
-                      Download File
-                    </Button>
                   </div>
                 )
               ) : invoice.file_path ? (

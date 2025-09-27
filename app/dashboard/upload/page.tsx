@@ -3,20 +3,23 @@
 import { useState, useCallback, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  Upload, 
-  FileText, 
-  X, 
-  CheckCircle, 
-  AlertCircle, 
+import {
+  Upload,
+  FileText,
+  X,
+  CheckCircle,
+  AlertCircle,
   FolderOpen,
   Image,
-  FileCheck
+  FileCheck,
+  ChevronRight,
+  Home
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 
@@ -88,7 +91,9 @@ function UploadPageContent() {
     setFiles(prev => [...prev, ...newFiles]);
 
     if (rejectedFiles.length > 0) {
-      alert('Some files were rejected. Please ensure files are PDFs or images under 10MB.');
+      toast.error(`${rejectedFiles.length} file(s) rejected. Please ensure files are PDFs or images under 10MB.`);
+    } else if (newFiles.length > 0) {
+      toast.success(`${newFiles.length} file(s) added successfully!`);
     }
   }, []);
 
@@ -108,16 +113,17 @@ function UploadPageContent() {
 
   const uploadFiles = async () => {
     if (!selectedProject) {
-      alert('Please select a project first');
+      toast.error('Please select a project first');
       return;
     }
 
     if (files.length === 0) {
-      alert('Please add files to upload');
+      toast.error('Please add files to upload');
       return;
     }
 
     setIsUploading(true);
+    setUploadComplete(false);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -275,9 +281,10 @@ function UploadPageContent() {
       }
 
       setUploadComplete(true);
+      toast.success(`${files.length} document(s) uploaded and processing started!`);
     } catch (error) {
       console.error('Error during upload:', error);
-      alert('Upload failed. Please try again.');
+      toast.error('Upload failed. Please try again.');
     } finally {
       setIsUploading(false);
     }
@@ -306,9 +313,18 @@ function UploadPageContent() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">Upload Documents</h1>
-        <p className="text-muted-foreground mt-2">
+      {/* Breadcrumb Navigation */}
+      <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
+        <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard')} className="p-0 h-auto">
+          <Home className="h-4 w-4" />
+        </Button>
+        <ChevronRight className="h-4 w-4" />
+        <span className="text-foreground font-medium">Upload Documents</span>
+      </nav>
+
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight">Upload Documents</h1>
+        <p className="text-muted-foreground text-lg">
           Upload expense documents (invoices, receipts, bills, statements) for AI-powered OCR processing
         </p>
       </div>
@@ -353,29 +369,46 @@ function UploadPageContent() {
             {...getRootProps()}
             className={`
               border-2 border-dashed rounded-lg p-12 text-center cursor-pointer
-              transition-colors duration-200
-              ${isDragActive 
-                ? 'border-primary bg-primary/5' 
-                : 'border-gray-300 hover:border-gray-400'
+              transition-all duration-300 transform
+              ${isDragActive
+                ? 'border-primary bg-primary/10 scale-105 shadow-lg'
+                : 'border-gray-300 hover:border-primary hover:bg-primary/5 hover:scale-102'
               }
             `}
           >
             <input {...getInputProps()} />
-            <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <div className={`transition-all duration-300 ${isDragActive ? 'scale-110' : ''}`}>
+              <Upload className={`h-16 w-16 mx-auto mb-6 transition-colors duration-300 ${
+                isDragActive ? 'text-primary' : 'text-gray-400'
+              }`} />
+            </div>
             {isDragActive ? (
-              <p className="text-lg font-semibold">Drop files here...</p>
+              <div className="space-y-2">
+                <p className="text-xl font-bold text-primary">Drop files here!</p>
+                <p className="text-primary/80">Release to upload your documents</p>
+              </div>
             ) : (
-              <>
-                <p className="text-lg font-semibold mb-2">
-                  Drag & drop files here
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xl font-bold mb-2 text-gray-900">
+                    Drag & drop your documents
+                  </p>
+                  <p className="text-gray-600 text-lg">
+                    or click to browse files
+                  </p>
+                </div>
+                <div className="flex flex-wrap justify-center gap-2 text-sm text-gray-500">
+                  <span className="bg-gray-100 px-3 py-1 rounded-full">PDF</span>
+                  <span className="bg-gray-100 px-3 py-1 rounded-full">PNG</span>
+                  <span className="bg-gray-100 px-3 py-1 rounded-full">JPG</span>
+                  <span className="bg-gray-100 px-3 py-1 rounded-full">JPEG</span>
+                  <span className="bg-gray-100 px-3 py-1 rounded-full">GIF</span>
+                  <span className="bg-gray-100 px-3 py-1 rounded-full">WebP</span>
+                </div>
+                <p className="text-sm text-gray-500">
+                  Maximum file size: 10MB per file
                 </p>
-                <p className="text-muted-foreground">
-                  or click to browse files
-                </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Supports PDF, PNG, JPG, JPEG, GIF, WebP (Max 10MB per file)
-                </p>
-              </>
+              </div>
             )}
           </div>
         </CardContent>
@@ -420,21 +453,42 @@ function UploadPageContent() {
                         {file.size ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : 'Processing...'}
                       </p>
                       {file.status === 'uploading' || file.status === 'processing' ? (
-                        <Progress value={file.progress} className="h-1 mt-2" />
+                        <div className="mt-2 space-y-1">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-primary font-medium">
+                              {file.status === 'uploading' ? 'Uploading...' : 'Processing...'}
+                            </span>
+                            <span className="text-muted-foreground">{file.progress}%</span>
+                          </div>
+                          <Progress
+                            value={file.progress}
+                            className="h-2"
+                          />
+                        </div>
                       ) : file.error ? (
-                        <p className="text-xs text-red-600 mt-1">{file.error}</p>
+                        <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-md">
+                          <p className="text-xs text-red-700 font-medium">Upload Failed</p>
+                          <p className="text-xs text-red-600 mt-1">{file.error}</p>
+                        </div>
+                      ) : file.status === 'completed' ? (
+                        <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
+                          <p className="text-xs text-green-700 font-medium">Successfully processed!</p>
+                        </div>
                       ) : null}
                     </div>
-                    {getStatusIcon(file.status)}
-                    {file.status === 'pending' && !isUploading && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeFile(file.id)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon(file.status)}
+                      {file.status === 'pending' && !isUploading && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeFile(file.id)}
+                          className="hover:bg-red-50 hover:text-red-600"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -444,19 +498,47 @@ function UploadPageContent() {
       )}
 
       {uploadComplete && (
-        <Alert>
-          <CheckCircle className="h-4 w-4" />
-          <AlertDescription>
-            Files uploaded successfully! They are now being processed.
-            <Button
-              variant="link"
-              className="ml-2"
-              onClick={() => router.push(`/dashboard/projects/${selectedProject}`)}
-            >
-              View in Project
-            </Button>
-          </AlertDescription>
-        </Alert>
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center text-center space-y-4">
+              <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-green-900">Upload Successful!</h3>
+                <p className="text-green-700 mt-1">
+                  {files.length} document{files.length > 1 ? 's' : ''} uploaded and being processed
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                <Button
+                  onClick={() => router.push(`/dashboard/projects/${selectedProject}`)}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <FolderOpen className="mr-2 h-4 w-4" />
+                  View Project
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setFiles([]);
+                    setUploadComplete(false);
+                  }}
+                  className="border-green-200 text-green-700 hover:bg-green-50"
+                >
+                  Upload More
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => router.push('/dashboard')}
+                  className="border-green-200 text-green-700 hover:bg-green-50"
+                >
+                  Back to Dashboard
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

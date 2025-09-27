@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
-import { FileText, FolderOpen, Upload, TrendingUp, Plus, ArrowRight, CreditCard } from 'lucide-react'
+import { FileText, FolderOpen, Upload, TrendingUp, Plus, ArrowRight, CreditCard, Activity, Zap } from 'lucide-react'
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
@@ -85,59 +85,78 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Welcome back!</h1>
-          <p className="text-muted-foreground">Here's an overview of your expense document processing activity</p>
+          <h1 className="text-3xl font-bold tracking-tight">Welcome back!</h1>
+          <p className="text-muted-foreground text-lg">Here's an overview of your expense document processing activity</p>
         </div>
-        <Link href="/dashboard/upload">
-          <Button>
-            <Upload className="mr-2 h-4 w-4" />
-            Upload Document
-          </Button>
-        </Link>
+        <div className="flex gap-3">
+          <Link href="/dashboard/projects">
+            <Button variant="outline">
+              <Plus className="mr-2 h-4 w-4" />
+              New Project
+            </Button>
+          </Link>
+          <Link href="/dashboard/upload">
+            <Button className="bg-primary hover:bg-primary/90">
+              <Upload className="mr-2 h-4 w-4" />
+              Upload Document
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid gap-6 md:grid-cols-4">
-        <Card>
+        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-blue-500">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Projects</CardTitle>
-            <FolderOpen className="h-4 w-4 text-muted-foreground" />
+            <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
+              <FolderOpen className="h-4 w-4 text-blue-600" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalProjects}</div>
             <p className="text-xs text-muted-foreground">Active projects</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-green-500">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Documents</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+            <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
+              <FileText className="h-4 w-4 text-green-600" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalInvoices}</div>
             <p className="text-xs text-muted-foreground">Processed documents</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-purple-500">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Pages Used</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <div className="h-8 w-8 bg-purple-100 rounded-full flex items-center justify-center">
+              <Activity className="h-4 w-4 text-purple-600" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {stats.pagesUsed} / {stats.pagesLimit}
             </div>
-            <Progress value={usagePercentage} className="mt-2" />
+            <Progress value={usagePercentage} className="mt-2 h-2" />
+            <p className="text-xs text-muted-foreground mt-2">
+              {Math.round(usagePercentage)}% used
+            </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-orange-500">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Plan Status</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
+            <div className="h-8 w-8 bg-orange-100 rounded-full flex items-center justify-center">
+              <Zap className="h-4 w-4 text-orange-600" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">Free</div>
-            <Link href="/dashboard/billing" className="text-xs text-primary hover:underline">
+            <Link href="/dashboard/billing" className="text-xs text-primary hover:underline font-medium">
               Upgrade plan →
             </Link>
           </CardContent>

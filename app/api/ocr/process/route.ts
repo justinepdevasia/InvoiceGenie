@@ -228,8 +228,8 @@ export async function POST(request: NextRequest) {
     try {
       // Extract text from OCR response
       if (ocrData.pages && ocrData.pages.length > 0) {
-        // Get text from all pages
-        ocrText = ocrData.pages.map((page: any) => page.text || '').join('\n');
+        // Get text from all pages - Mistral OCR uses 'markdown' field
+        ocrText = ocrData.pages.map((page: any) => page.markdown || page.text || '').join('\n');
         console.log('Extracted OCR text:', ocrText.substring(0, 500));
       } else if (ocrData.text) {
         ocrText = ocrData.text;
@@ -255,11 +255,24 @@ export async function POST(request: NextRequest) {
             messages: [
               {
                 role: 'user',
-                content: `Extract invoice information from this OCR text and return it as JSON:
+                content: `Extract expense document information from this OCR text and return it as JSON. This could be an invoice, receipt, or bill.
 
+OCR Text:
 ${ocrText}
 
-${extractionPrompt}`
+Extract the following information and return as valid JSON:
+- vendor_name: Name of the store/business/seller (required)
+- vendor_address: Complete address if available
+- total_amount: Total amount including tax (number, required)
+- subtotal: Subtotal before tax (number)
+- tax_amount: Tax amount (number)
+- currency: Currency code (USD, EUR, etc.)
+- invoice_date: Transaction date (YYYY-MM-DD format)
+- invoice_number: Receipt/invoice number if available
+- line_items: Array of purchased items with description, quantity, unit_price, amount
+- payment_method: Payment method used (cash, card, etc.)
+
+Return only valid JSON without markdown formatting.`
               }
             ],
             temperature: 0.1,

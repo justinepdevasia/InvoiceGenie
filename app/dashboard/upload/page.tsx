@@ -19,7 +19,6 @@ import {
   FileCheck
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
 interface FileWithPreview {
   file: File; // Store the original File object

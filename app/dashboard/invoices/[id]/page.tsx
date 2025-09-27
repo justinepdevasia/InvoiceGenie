@@ -61,7 +61,7 @@ interface LineItem {
 
 interface Invoice {
   id: string;
-  original_file_url: string;
+  file_path: string;
   original_file_name: string;
   file_type: string;
   processing_status: string;
@@ -112,17 +112,20 @@ export default function InvoiceDetailPage() {
       setInvoice(invoiceData);
 
       // Generate signed URL for file preview
-      if (invoiceData.original_file_url && !invoiceData.original_file_url.startsWith('direct-processing/')) {
+      if (invoiceData.file_path) {
         const { data: signedUrl, error: urlError } = await supabase.storage
-          .from('invoices')
-          .createSignedUrl(invoiceData.original_file_url, 3600); // 1 hour expiry
-        
+          .from('documents')
+          .createSignedUrl(invoiceData.file_path, 3600); // 1 hour expiry
+
         if (!urlError && signedUrl) {
           setFileUrl(signedUrl.signedUrl);
+          console.log('Generated signed URL for preview:', signedUrl.signedUrl);
+        } else {
+          console.error('Error creating signed URL:', urlError);
+          setFileUrl(null);
         }
       } else {
-        // For direct-processing files, we don't have a preview available
-        console.log('File was processed directly, preview not available');
+        console.log('No file_path found for invoice');
         setFileUrl(null);
       }
 
@@ -395,11 +398,11 @@ export default function InvoiceDetailPage() {
                   <div className="flex items-center justify-center relative" style={{ maxHeight: '70vh' }}>
                     <Image
                       src={fileUrl}
-                      alt="Invoice"
+                      alt="Invoice Preview"
                       width={800}
                       height={1000}
                       className="rounded shadow-lg"
-                      style={{ 
+                      style={{
                         width: 'auto',
                         height: 'auto',
                         maxWidth: '100%',
@@ -407,21 +410,56 @@ export default function InvoiceDetailPage() {
                         objectFit: 'contain'
                       }}
                       priority
+                      onError={() => {
+                        console.error('Image failed to load');
+                        setFileUrl(null);
+                      }}
                     />
                   </div>
+                ) : invoice.file_type === 'application/pdf' ? (
+                  // For PDFs, use iframe with fallback
+                  <div className="relative" style={{ height: '70vh' }}>
+                    <iframe
+                      src={`${fileUrl}#view=FitH`}
+                      className="w-full rounded border-0"
+                      style={{
+                        height: '100%',
+                        minHeight: '500px'
+                      }}
+                      title="PDF Invoice Preview"
+                      onError={() => {
+                        console.error('PDF failed to load in iframe');
+                      }}
+                    />
+                    <div className="absolute top-2 right-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => window.open(fileUrl, '_blank')}
+                        className="bg-white/90"
+                      >
+                        Open PDF
+                      </Button>
+                    </div>
+                  </div>
                 ) : (
-                  // For PDFs and other documents, use iframe
-                  <iframe
-                    src={fileUrl}
-                    className="w-full rounded"
-                    style={{ 
-                      height: '70vh',
-                      minHeight: '500px'
-                    }}
-                    title="Invoice Preview"
-                  />
+                  // For other file types, show download option
+                  <div className="text-center py-20">
+                    <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-lg font-medium mb-2">Document Preview</p>
+                    <p className="text-gray-500 mb-4">
+                      {invoice.file_type} • {invoice.original_file_name}
+                    </p>
+                    <Button
+                      onClick={() => window.open(fileUrl, '_blank')}
+                      variant="outline"
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Download File
+                    </Button>
+                  </div>
                 )
-              ) : invoice.original_file_url ? (
+              ) : invoice.file_path ? (
                 <div className="text-center py-20">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
                   <p className="text-gray-500">Loading preview...</p>
@@ -430,6 +468,9 @@ export default function InvoiceDetailPage() {
                 <div className="text-center py-20">
                   <FileText className="h-12 w-12 text-gray-400 mx-auto mb-2" />
                   <p className="text-gray-500">Preview not available</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    File may have been processed directly without storage
+                  </p>
                 </div>
               )}
             </div>

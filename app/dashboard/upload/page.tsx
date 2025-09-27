@@ -19,6 +19,7 @@ import {
   FileCheck
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
 interface FileWithPreview {
   file: File; // Store the original File object
@@ -138,26 +139,40 @@ function UploadPageContent() {
           
           const fileName = `${user.id}/${selectedProject}/${Date.now()}-${fileWrapper.name}`;
           
-          // Upload to Supabase storage
+          // Upload to Supabase storage using S3 protocol with user-scoped credentials
           let filePath = fileName;
           try {
-            const { data: uploadData, error: uploadError } = await supabase.storage
-              .from('documents')
-              .upload(fileName, fileWrapper.file, {
-                contentType: fileWrapper.type || 'application/pdf',
-                cacheControl: '3600',
-                upsert: false
-              });
-
-            if (uploadError) {
-              console.error('Storage upload failed:', uploadError);
-              throw new Error(`Storage upload failed: ${uploadError.message}`);
+            // Get the current session for S3 authentication
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+              throw new Error('No active session');
             }
 
-            filePath = uploadData.path;
+            // Create S3 client with user-scoped credentials
+            const s3Client = new S3Client({
+              forcePathStyle: true,
+              region: 'us-east-1', // Supabase default region
+              endpoint: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/s3`,
+              credentials: {
+                accessKeyId: process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0] || '', // project_ref
+                secretAccessKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+                sessionToken: session.access_token,
+              },
+            });
+
+            // Upload file using S3 protocol
+            const uploadCommand = new PutObjectCommand({
+              Bucket: 'documents',
+              Key: fileName,
+              Body: fileWrapper.file,
+              ContentType: fileWrapper.type || 'application/pdf',
+            });
+
+            await s3Client.send(uploadCommand);
+            filePath = fileName;
             console.log('File uploaded successfully to:', filePath);
           } catch (storageErr) {
-            console.error('Storage upload error:', storageErr);
+            console.error('S3 upload error:', storageErr);
             throw new Error(`Failed to upload file: ${storageErr instanceof Error ? storageErr.message : 'Unknown error'}`);
           }
 

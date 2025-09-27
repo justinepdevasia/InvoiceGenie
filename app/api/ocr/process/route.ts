@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 
 const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY;
 const MISTRAL_OCR_URL = 'https://api.mistral.ai/v1/ocr';
@@ -65,25 +66,50 @@ export async function POST(request: NextRequest) {
       console.log('Estimated file size:', arrayBufferSize);
       console.log('Base64 preview:', base64.substring(0, 100));
     } else {
-      // Fallback to file download from storage
-      const { data: fileData, error: downloadError } = await supabase.storage
-        .from('documents')
-        .download(filePath);
+      // Fallback to file download from storage using S3 protocol
+      try {
+        // Create S3 client with service role credentials for server-side access
+        const s3Client = new S3Client({
+          forcePathStyle: true,
+          region: 'us-east-1',
+          endpoint: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/s3`,
+          credentials: {
+            accessKeyId: process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0] || '',
+            secretAccessKey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+            // No sessionToken needed for service role
+          },
+        });
 
-      if (downloadError) {
-        console.error('Error downloading file:', downloadError);
-        throw new Error('Failed to access file');
+        const downloadCommand = new GetObjectCommand({
+          Bucket: 'documents',
+          Key: filePath,
+        });
+
+        const response = await s3Client.send(downloadCommand);
+        if (!response.Body) {
+          throw new Error('No file data received');
+        }
+
+        // Convert stream to buffer
+        const chunks: Buffer[] = [];
+        const stream = response.Body as any;
+
+        for await (const chunk of stream) {
+          chunks.push(chunk);
+        }
+
+        const buffer = Buffer.concat(chunks);
+        base64 = buffer.toString('base64');
+        arrayBufferSize = buffer.length;
+
+        console.log('Downloaded from S3 storage');
+        console.log('File size in bytes:', arrayBufferSize);
+        console.log('Base64 length:', base64.length);
+        console.log('Base64 preview:', base64.substring(0, 100));
+      } catch (s3Error) {
+        console.error('S3 download error:', s3Error);
+        throw new Error('Failed to download file from storage');
       }
-
-      // Convert file to base64 for OCR processing
-      const arrayBuffer = await fileData.arrayBuffer();
-      base64 = Buffer.from(arrayBuffer).toString('base64');
-      arrayBufferSize = arrayBuffer.byteLength;
-      
-      console.log('Downloaded from storage');
-      console.log('File size in bytes:', arrayBufferSize);
-      console.log('Base64 length:', base64.length);
-      console.log('Base64 preview:', base64.substring(0, 100));
     }
     
     // Validate file type and determine MIME type for the data URL

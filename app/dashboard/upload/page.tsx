@@ -138,24 +138,27 @@ function UploadPageContent() {
           
           const fileName = `${user.id}/${Date.now()}-${fileWrapper.name}`;
           
-          // Try to upload to storage for preview purposes
+          // Upload to Supabase storage
           let filePath = fileName;
           try {
             const { data: uploadData, error: uploadError } = await supabase.storage
-              .from('invoices')
+              .from('documents')
               .upload(fileName, fileWrapper.file, {
                 contentType: fileWrapper.type || 'application/pdf',
                 cacheControl: '3600',
                 upsert: false
               });
-            
+
             if (uploadError) {
-              console.warn('Storage upload failed, continuing with OCR:', uploadError);
-              filePath = `direct-processing/${Date.now()}-${fileWrapper.name}`;
+              console.error('Storage upload failed:', uploadError);
+              throw new Error(`Storage upload failed: ${uploadError.message}`);
             }
+
+            filePath = uploadData.path;
+            console.log('File uploaded successfully to:', filePath);
           } catch (storageErr) {
-            console.warn('Storage upload failed, continuing with OCR:', storageErr);
-            filePath = `direct-processing/${Date.now()}-${fileWrapper.name}`;
+            console.error('Storage upload error:', storageErr);
+            throw new Error(`Failed to upload file: ${storageErr instanceof Error ? storageErr.message : 'Unknown error'}`);
           }
 
           setFiles(prev => prev.map(f => 
@@ -170,11 +173,10 @@ function UploadPageContent() {
             .insert([{
               project_id: selectedProject,
               user_id: user.id,
-              original_file_url: filePath, // Store path, not public URL
+              file_path: filePath,
               original_file_name: fileWrapper.name,
               file_type: fileWrapper.type || 'application/octet-stream',
               file_size: fileWrapper.size,
-              page_count: 1, // Will be updated by processing
               processing_status: 'pending'
             }])
             .select()

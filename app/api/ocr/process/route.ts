@@ -43,11 +43,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Update invoice status to processing
-    await supabase
+    const { error: updateError } = await supabase
       .from('invoices')
       .update({ processing_status: 'processing' })
       .eq('id', invoiceId)
       .eq('user_id', user.id);
+
+    if (updateError) {
+      console.error('Error updating invoice status:', updateError);
+      throw new Error('Failed to update invoice status');
+    }
 
     let base64, arrayBufferSize;
     
@@ -62,7 +67,7 @@ export async function POST(request: NextRequest) {
     } else {
       // Fallback to file download from storage
       const { data: fileData, error: downloadError } = await supabase.storage
-        .from('invoices')
+        .from('documents')
         .download(filePath);
 
       if (downloadError) {
@@ -132,7 +137,7 @@ export async function POST(request: NextRequest) {
     Return only valid JSON without any markdown formatting.`;
 
     console.log(`Processing file with type: ${fileType}`);
-    
+
     const ocrResponse = await fetch(MISTRAL_OCR_URL, {
       method: 'POST',
       headers: {
@@ -148,56 +153,7 @@ export async function POST(request: NextRequest) {
           type: 'image_url',
           image_url: dataUrl
         },
-        document_annotation_format: {
-          type: 'json_schema',
-          json_schema: {
-            name: 'invoice_extraction',
-            schema: {
-              type: 'object',
-              properties: {
-                invoice_number: { type: 'string' },
-                invoice_date: { type: 'string' },
-                due_date: { type: 'string' },
-                vendor_name: { type: 'string' },
-                vendor_address: { type: 'string' },
-                vendor_tax_id: { type: 'string' },
-                customer_name: { type: 'string' },
-                customer_address: { type: 'string' },
-                subtotal: { type: 'number' },
-                tax_rate: { type: 'number' },
-                tax_amount: { type: 'number' },
-                discount_amount: { type: 'number' },
-                total_amount: { type: 'number' },
-                currency: { type: 'string' },
-                payment_terms: { type: 'string' },
-                payment_method: { type: 'string' },
-                line_items: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      description: { type: 'string' },
-                      quantity: { type: 'number' },
-                      unit_price: { type: 'number' },
-                      amount: { type: 'number' }
-                    }
-                  }
-                },
-                notes: { type: 'string' },
-                bank_details: {
-                  type: 'object',
-                  properties: {
-                    bank_name: { type: 'string' },
-                    account_number: { type: 'string' },
-                    routing_number: { type: 'string' },
-                    iban: { type: 'string' },
-                    swift: { type: 'string' }
-                  }
-                }
-              }
-            }
-          }
-        }
+        include_image_base64: false
       })
     });
 
@@ -239,77 +195,69 @@ export async function POST(request: NextRequest) {
     const ocrData = await ocrResponse.json();
     console.log('OCR Response Data:', JSON.stringify(ocrData, null, 2));
     
-    // Parse the extracted data from OCR response (new format)
+    // Parse the extracted data from Mistral OCR response
     let extractedData;
+    let ocrText = '';
+
     try {
-      if (ocrData.document_annotation) {
-        // Handle the new OCR API response format with document_annotation
-        console.log('Found document_annotation:', ocrData.document_annotation);
-        if (typeof ocrData.document_annotation === 'string') {
-          try {
-            extractedData = JSON.parse(ocrData.document_annotation);
-          } catch {
-            extractedData = parseTextToInvoiceData(ocrData.document_annotation);
-          }
-        } else {
-          extractedData = ocrData.document_annotation;
-        }
-      } else if (ocrData.pages && ocrData.pages.length > 0) {
-        // Handle pages array if document_annotation is not available
-        const firstPage = ocrData.pages[0];
-        console.log('Found pages data:', firstPage);
-        if (firstPage.text) {
-          const jsonMatch = firstPage.text.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            extractedData = JSON.parse(jsonMatch[0]);
-          } else {
-            extractedData = parseTextToInvoiceData(firstPage.text);
-          }
-        } else {
-          extractedData = firstPage;
-        }
-      } else if (ocrData.choices && ocrData.choices[0]?.message?.content) {
-        // Chat completion format (fallback)
-        const content = ocrData.choices[0].message.content;
-        console.log('Found content in choices format:', content);
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          extractedData = JSON.parse(jsonMatch[0]);
-        } else {
-          extractedData = parseTextToInvoiceData(content);
-        }
+      // Extract text from OCR response
+      if (ocrData.pages && ocrData.pages.length > 0) {
+        // Get text from all pages
+        ocrText = ocrData.pages.map((page: any) => page.text || '').join('\n');
+        console.log('Extracted OCR text:', ocrText.substring(0, 500));
       } else if (ocrData.text) {
-        // Direct text response (fallback)
-        console.log('Found text field:', ocrData.text);
-        const jsonMatch = ocrData.text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          extractedData = JSON.parse(jsonMatch[0]);
+        ocrText = ocrData.text;
+        console.log('Found direct text:', ocrText.substring(0, 500));
+      } else {
+        console.error('No text found in OCR response:', ocrData);
+        throw new Error('No text extracted from document');
+      }
+
+      // Now extract structured data from the OCR text using AI
+      if (ocrText.trim()) {
+        console.log('Processing OCR text with AI for structured extraction...');
+
+        // Use Mistral AI to extract structured data from the OCR text
+        const structuredResponse = await fetch('https://api.mistral.ai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${MISTRAL_API_KEY}`
+          },
+          body: JSON.stringify({
+            model: 'mistral-large-latest',
+            messages: [
+              {
+                role: 'user',
+                content: `Extract invoice information from this OCR text and return it as JSON:
+
+${ocrText}
+
+${extractionPrompt}`
+              }
+            ],
+            temperature: 0.1,
+            max_tokens: 2000,
+            response_format: { type: 'json_object' }
+          })
+        });
+
+        if (structuredResponse.ok) {
+          const structuredData = await structuredResponse.json();
+          extractedData = JSON.parse(structuredData.choices[0].message.content);
+          console.log('AI extracted data:', extractedData);
         } else {
-          extractedData = parseTextToInvoiceData(ocrData.text);
-        }
-      } else if (ocrData.result) {
-        // Result field (fallback)
-        console.log('Found result field:', ocrData.result);
-        extractedData = typeof ocrData.result === 'string' 
-          ? JSON.parse(ocrData.result)
-          : ocrData.result;
-      } else if (ocrData.content) {
-        // Content field
-        console.log('Found content field:', ocrData.content);
-        const jsonMatch = ocrData.content.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          extractedData = JSON.parse(jsonMatch[0]);
-        } else {
-          extractedData = parseTextToInvoiceData(ocrData.content);
+          console.warn('AI extraction failed, using text parsing fallback');
+          extractedData = parseTextToInvoiceData(ocrText);
         }
       } else {
-        console.error('Unknown OCR response format:', ocrData);
-        throw new Error('No data extracted from document');
+        extractedData = parseTextToInvoiceData(ocrText);
       }
     } catch (parseError) {
-      console.error('Error parsing OCR data:', parseError);
+      console.error('Error processing OCR data:', parseError);
       console.error('Raw OCR data:', ocrData);
-      extractedData = {};
+      // Fallback to basic text parsing
+      extractedData = parseTextToInvoiceData(ocrText);
     }
     
     console.log('Extracted data:', extractedData);

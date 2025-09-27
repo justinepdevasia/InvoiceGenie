@@ -239,59 +239,9 @@ export async function POST(request: NextRequest) {
         throw new Error('No text extracted from document');
       }
 
-      // Now extract structured data from the OCR text using AI
-      if (ocrText.trim()) {
-        console.log('Processing OCR text with AI for structured extraction...');
-
-        // Use Mistral AI to extract structured data from the OCR text
-        const structuredResponse = await fetch('https://api.mistral.ai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${MISTRAL_API_KEY}`
-          },
-          body: JSON.stringify({
-            model: 'mistral-large-latest',
-            messages: [
-              {
-                role: 'user',
-                content: `Extract expense document information from this OCR text and return it as JSON. This could be an invoice, receipt, or bill.
-
-OCR Text:
-${ocrText}
-
-Extract the following information and return as valid JSON:
-- vendor_name: Name of the store/business/seller (required)
-- vendor_address: Complete address if available
-- total_amount: Total amount including tax (number, required)
-- subtotal: Subtotal before tax (number)
-- tax_amount: Tax amount (number)
-- currency: Currency code (USD, EUR, etc.)
-- invoice_date: Transaction date (YYYY-MM-DD format)
-- invoice_number: Receipt/invoice number if available
-- line_items: Array of purchased items with description, quantity, unit_price, amount
-- payment_method: Payment method used (cash, card, etc.)
-
-Return only valid JSON without markdown formatting.`
-              }
-            ],
-            temperature: 0.1,
-            max_tokens: 2000,
-            response_format: { type: 'json_object' }
-          })
-        });
-
-        if (structuredResponse.ok) {
-          const structuredData = await structuredResponse.json();
-          extractedData = JSON.parse(structuredData.choices[0].message.content);
-          console.log('AI extracted data:', extractedData);
-        } else {
-          console.warn('AI extraction failed, using text parsing fallback');
-          extractedData = parseTextToInvoiceData(ocrText);
-        }
-      } else {
-        extractedData = parseTextToInvoiceData(ocrText);
-      }
+      // Extract structured data directly from OCR text (no AI needed - saves costs!)
+      console.log('Extracting data directly from OCR text...');
+      extractedData = parseTextToInvoiceData(ocrText);
     } catch (parseError) {
       console.error('Error processing OCR data:', parseError);
       console.error('Raw OCR data:', ocrData);
@@ -500,28 +450,178 @@ async function fallbackToVisionModel(
   }
 }
 
-// Helper function to parse unstructured text into invoice data
+// Helper function to parse OCR text into structured invoice data
 function parseTextToInvoiceData(text: string) {
   const data: any = {};
-  
-  // Try to extract common invoice fields using regex patterns
-  const invoiceNumberMatch = text.match(/invoice\s*#?\s*:?\s*([A-Z0-9-]+)/i);
-  if (invoiceNumberMatch) data.invoice_number = invoiceNumberMatch[1];
-  
-  const totalMatch = text.match(/total\s*:?\s*\$?([0-9,]+\.?[0-9]*)/i);
-  if (totalMatch) data.total_amount = parseFloat(totalMatch[1].replace(',', ''));
-  
-  const dateMatch = text.match(/date\s*:?\s*([0-9]{1,2}[-\/][0-9]{1,2}[-\/][0-9]{2,4})/i);
-  if (dateMatch) data.invoice_date = dateMatch[1];
-  
-  // Extract vendor name (usually at the top)
-  const lines = text.split('\n');
-  if (lines.length > 0) {
-    data.vendor_name = lines[0].trim();
+  const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+
+  // Extract invoice number - try multiple patterns
+  const invoicePatterns = [
+    /invoice\s*#?:?\s*([A-Z0-9-]+)/i,
+    /inv\s*#?:?\s*([A-Z0-9-]+)/i,
+    /invoice\s*number\s*:?\s*([A-Z0-9-]+)/i,
+    /document\s*#?:?\s*([A-Z0-9-]+)/i,
+    /#\s*([A-Z0-9-]+)/i
+  ];
+
+  for (const pattern of invoicePatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      data.invoice_number = match[1];
+      break;
+    }
   }
-  
-  // Default currency
-  data.currency = text.includes('€') ? 'EUR' : text.includes('£') ? 'GBP' : 'USD';
-  
+
+  // Extract amounts - try multiple patterns
+  const amountPatterns = [
+    /total\s*:?\s*\$?([0-9,]+\.?[0-9]*)/i,
+    /amount\s*:?\s*\$?([0-9,]+\.?[0-9]*)/i,
+    /grand\s*total\s*:?\s*\$?([0-9,]+\.?[0-9]*)/i,
+    /balance\s*:?\s*\$?([0-9,]+\.?[0-9]*)/i,
+    /\$\s*([0-9,]+\.?[0-9]*)/g
+  ];
+
+  let amounts: number[] = [];
+  for (const pattern of amountPatterns) {
+    const matches = text.matchAll(pattern);
+    for (const match of matches) {
+      const amount = parseFloat(match[1].replace(/,/g, ''));
+      if (!isNaN(amount) && amount > 0) {
+        amounts.push(amount);
+      }
+    }
+  }
+
+  if (amounts.length > 0) {
+    data.total_amount = Math.max(...amounts); // Use highest amount as total
+  }
+
+  // Extract subtotal and tax
+  const subtotalMatch = text.match(/subtotal\s*:?\s*\$?([0-9,]+\.?[0-9]*)/i);
+  if (subtotalMatch) data.subtotal = parseFloat(subtotalMatch[1].replace(/,/g, ''));
+
+  const taxMatch = text.match(/tax\s*:?\s*\$?([0-9,]+\.?[0-9]*)/i);
+  if (taxMatch) data.tax_amount = parseFloat(taxMatch[1].replace(/,/g, ''));
+
+  // Extract dates - try multiple patterns
+  const datePatterns = [
+    /date\s*:?\s*([0-9]{1,2}[-\/][0-9]{1,2}[-\/][0-9]{2,4})/i,
+    /invoice\s*date\s*:?\s*([0-9]{1,2}[-\/][0-9]{1,2}[-\/][0-9]{2,4})/i,
+    /([0-9]{1,2}[-\/][0-9]{1,2}[-\/][0-9]{4})/g,
+    /([0-9]{4}[-\/][0-9]{1,2}[-\/][0-9]{1,2})/g
+  ];
+
+  for (const pattern of datePatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      data.invoice_date = formatDate(match[1]);
+      break;
+    }
+  }
+
+  // Extract due date
+  const dueDateMatch = text.match(/due\s*date\s*:?\s*([0-9]{1,2}[-\/][0-9]{1,2}[-\/][0-9]{2,4})/i);
+  if (dueDateMatch) data.due_date = formatDate(dueDateMatch[1]);
+
+  // Extract vendor name - look for company-like patterns at the top
+  for (let i = 0; i < Math.min(5, lines.length); i++) {
+    const line = lines[i];
+    // Skip lines that look like headers or numbers
+    if (line.length > 3 &&
+        !line.match(/^[0-9\-\/\s]+$/) &&
+        !line.toLowerCase().includes('invoice') &&
+        !line.toLowerCase().includes('receipt') &&
+        !line.toLowerCase().includes('bill')) {
+      data.vendor_name = line;
+      break;
+    }
+  }
+
+  // Extract customer name - usually appears after "bill to" or "customer"
+  const customerMatch = text.match(/(?:bill\s*to|customer|client)\s*:?\s*([^\n]+)/i);
+  if (customerMatch) data.customer_name = customerMatch[1].trim();
+
+  // Extract addresses - look for address-like patterns
+  const addressPattern = /([0-9]+\s+[A-Za-z\s]+(?:street|st|avenue|ave|road|rd|lane|ln|drive|dr|blvd|boulevard)[^\n]*)/i;
+  const addressMatch = text.match(addressPattern);
+  if (addressMatch) data.vendor_address = addressMatch[1].trim();
+
+  // Determine currency from symbols in text
+  if (text.includes('€') || text.toLowerCase().includes('eur')) {
+    data.currency = 'EUR';
+  } else if (text.includes('£') || text.toLowerCase().includes('gbp')) {
+    data.currency = 'GBP';
+  } else if (text.includes('¥') || text.toLowerCase().includes('jpy')) {
+    data.currency = 'JPY';
+  } else {
+    data.currency = 'USD';
+  }
+
+  // Extract line items - look for table-like structures
+  const lineItems = extractLineItems(text);
+  if (lineItems.length > 0) {
+    data.line_items = lineItems;
+  }
+
+  // Extract payment terms
+  const paymentTermsMatch = text.match(/(?:payment\s*terms?|terms)\s*:?\s*([^\n]+)/i);
+  if (paymentTermsMatch) data.payment_terms = paymentTermsMatch[1].trim();
+
   return data;
+}
+
+// Helper function to format dates consistently
+function formatDate(dateStr: string): string {
+  try {
+    // Try to parse and format the date
+    const date = new Date(dateStr.replace(/[-\/]/g, '/'));
+    if (!isNaN(date.getTime())) {
+      return date.toISOString().split('T')[0]; // Return YYYY-MM-DD format
+    }
+  } catch (e) {
+    // If parsing fails, return original string
+  }
+  return dateStr;
+}
+
+// Helper function to extract line items from text
+function extractLineItems(text: string): any[] {
+  const lineItems: any[] = [];
+  const lines = text.split('\n');
+
+  // Look for table-like structures with quantity, description, and amount
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+
+    // Pattern for: quantity | description | unit_price | amount
+    const itemPattern = /(\d+)\s+(.+?)\s+\$?([0-9,]+\.?\d*)\s+\$?([0-9,]+\.?\d*)/;
+    const match = line.match(itemPattern);
+
+    if (match) {
+      lineItems.push({
+        quantity: parseInt(match[1]),
+        description: match[2].trim(),
+        unit_price: parseFloat(match[3].replace(/,/g, '')),
+        amount: parseFloat(match[4].replace(/,/g, ''))
+      });
+    } else {
+      // Simpler pattern for: description | amount
+      const simplePattern = /(.+?)\s+\$?([0-9,]+\.?\d*)$/;
+      const simpleMatch = line.match(simplePattern);
+
+      if (simpleMatch && simpleMatch[2]) {
+        const amount = parseFloat(simpleMatch[2].replace(/,/g, ''));
+        if (amount > 0 && amount < (lineItems.length > 0 ? Math.max(...lineItems.map(item => item.amount || 0)) * 10 : 10000)) {
+          lineItems.push({
+            quantity: 1,
+            description: simpleMatch[1].trim(),
+            unit_price: amount,
+            amount: amount
+          });
+        }
+      }
+    }
+  }
+
+  return lineItems;
 }

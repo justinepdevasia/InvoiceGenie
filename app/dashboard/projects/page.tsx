@@ -130,7 +130,7 @@ export default function ProjectsPage() {
   }
 
   const handleDeleteProject = async (projectId: string) => {
-    if (!confirm('Are you sure you want to delete this project? All associated invoices will also be deleted.')) {
+    if (!confirm('Are you sure you want to delete this project? All associated expense documents will also be deleted.')) {
       return
     }
 
@@ -176,7 +176,7 @@ export default function ProjectsPage() {
           <div>
             <h1 className="text-3xl font-bold">Projects</h1>
             <p className="text-muted-foreground mt-2">
-              Organize your invoices by client, vendor, or time period
+              Organize your expense documents by client, vendor, or time period
             </p>
           </div>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -189,7 +189,7 @@ export default function ProjectsPage() {
               <DialogHeader>
                 <DialogTitle>Create New Project</DialogTitle>
                 <DialogDescription>
-                  Create a project to organize your invoices
+                  Create a project to organize your expense documents
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
@@ -197,7 +197,7 @@ export default function ProjectsPage() {
                   <Label htmlFor="name">Project Name</Label>
                   <Input
                     id="name"
-                    placeholder="e.g., Q4 2024 Invoices"
+                    placeholder="e.g., Q4 2024 Expenses"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   />
@@ -250,7 +250,7 @@ export default function ProjectsPage() {
             <p className="text-muted-foreground mb-4">
               {searchQuery 
                 ? 'Try adjusting your search query'
-                : 'Create your first project to start organizing invoices'
+                : 'Create your first project to start organizing expense documents'
               }
             </p>
             {!searchQuery && (
@@ -306,7 +306,7 @@ export default function ProjectsPage() {
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <FileText className="h-4 w-4" />
-                    <span>{project._count?.invoices || 0} invoices</span>
+                    <span>{project._count?.invoices || 0} documents</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />

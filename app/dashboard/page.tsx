@@ -86,12 +86,12 @@ export default function DashboardPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold">Welcome back!</h1>
-          <p className="text-muted-foreground">Here's an overview of your invoice processing activity</p>
+          <p className="text-muted-foreground">Here's an overview of your expense document processing activity</p>
         </div>
         <Link href="/dashboard/upload">
           <Button>
             <Upload className="mr-2 h-4 w-4" />
-            Upload Invoice
+            Upload Document
           </Button>
         </Link>
       </div>
@@ -110,12 +110,12 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Invoices</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Documents</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalInvoices}</div>
-            <p className="text-xs text-muted-foreground">Processed invoices</p>
+            <p className="text-xs text-muted-foreground">Processed documents</p>
           </CardContent>
         </Card>
         <Card>
@@ -151,7 +151,7 @@ export default function DashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Recent Projects</CardTitle>
-              <CardDescription>Your latest invoice projects</CardDescription>
+              <CardDescription>Your latest expense document projects</CardDescription>
             </div>
             <Link href="/dashboard/projects">
               <Button variant="ghost" size="sm">
@@ -199,7 +199,7 @@ export default function DashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Recent Invoices</CardTitle>
-              <CardDescription>Latest processed invoices</CardDescription>
+              <CardDescription>Latest processed documents</CardDescription>
             </div>
             <Link href="/dashboard/invoices">
               <Button variant="ghost" size="sm">
@@ -212,11 +212,11 @@ export default function DashboardPage() {
             {stats.recentInvoices.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <FileText className="h-12 w-12 text-muted-foreground mb-3" />
-                <p className="text-sm text-muted-foreground mb-3">No invoices uploaded yet</p>
+                <p className="text-sm text-muted-foreground mb-3">No documents uploaded yet</p>
                 <Link href="/dashboard/upload">
                   <Button size="sm">
                     <Upload className="mr-2 h-4 w-4" />
-                    Upload Invoice
+                    Upload Document
                   </Button>
                 </Link>
               </div>
@@ -258,8 +258,8 @@ export default function DashboardPage() {
       {stats.totalInvoices === 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Getting Started with Invoice Genie</CardTitle>
-            <CardDescription>Follow these steps to process your first invoice</CardDescription>
+            <CardTitle>Getting Started with Expensa</CardTitle>
+            <CardDescription>Follow these steps to process your first expense document</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -269,7 +269,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <p className="font-medium">Create a Project</p>
-                  <p className="text-sm text-muted-foreground">Organize your invoices by creating projects</p>
+                  <p className="text-sm text-muted-foreground">Organize your expense documents by creating projects</p>
                 </div>
               </div>
               <div className="flex gap-4">
@@ -277,8 +277,8 @@ export default function DashboardPage() {
                   2
                 </div>
                 <div>
-                  <p className="font-medium">Upload Invoices</p>
-                  <p className="text-sm text-muted-foreground">Upload PDF or image files of your invoices</p>
+                  <p className="font-medium">Upload Documents</p>
+                  <p className="text-sm text-muted-foreground">Upload PDF or image files of your expense documents</p>
                 </div>
               </div>
               <div className="flex gap-4">

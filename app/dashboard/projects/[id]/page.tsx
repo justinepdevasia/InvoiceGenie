@@ -191,7 +191,7 @@ export default function ProjectDetailsPage() {
       <div className="grid gap-4 md:grid-cols-4 mb-6">
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Total Invoices</CardDescription>
+            <CardDescription>Total Documents</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{invoices.length}</div>
@@ -232,7 +232,7 @@ export default function ProjectDetailsPage() {
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <CardTitle>Invoices</CardTitle>
+            <CardTitle>Documents</CardTitle>
             <div className="flex gap-2 w-full sm:w-auto">
               <div className="relative flex-1 sm:flex-initial">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -254,7 +254,7 @@ export default function ProjectDetailsPage() {
                 onClick={() => router.push(`/dashboard/upload?project=${params.id}`)}
                 className="bg-gradient-primary"
               >
-                <Upload className="mr-2 h-4 w-4" /> Upload Invoice
+                <Upload className="mr-2 h-4 w-4" /> Upload Document
               </Button>
             </div>
           </div>
@@ -269,7 +269,7 @@ export default function ProjectDetailsPage() {
               <p className="text-muted-foreground mb-4">
                 {searchQuery 
                   ? 'Try adjusting your search query'
-                  : 'Upload your first invoice to this project'
+                  : 'Upload your first expense document to this project'
                 }
               </p>
               {!searchQuery && (
@@ -277,7 +277,7 @@ export default function ProjectDetailsPage() {
                   onClick={() => router.push(`/dashboard/upload?project=${params.id}`)}
                   className="bg-gradient-primary"
                 >
-                  <Upload className="mr-2 h-4 w-4" /> Upload First Invoice
+                  <Upload className="mr-2 h-4 w-4" /> Upload First Document
                 </Button>
               )}
             </div>

@@ -306,9 +306,9 @@ function UploadPageContent() {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div>
-        <h1 className="text-3xl font-bold">Upload Invoices</h1>
+        <h1 className="text-3xl font-bold">Upload Documents</h1>
         <p className="text-muted-foreground mt-2">
-          Upload PDF or image files for AI-powered OCR processing
+          Upload expense documents (invoices, receipts, bills, statements) for AI-powered OCR processing
         </p>
       </div>
 
@@ -316,7 +316,7 @@ function UploadPageContent() {
         <CardHeader>
           <CardTitle>Select Project</CardTitle>
           <CardDescription>
-            Choose which project these invoices belong to
+            Choose which project these expense documents belong to
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -56,7 +56,7 @@ export default function FeaturesPage() {
         {
           icon: FileSearch,
           title: 'Smart Data Extraction',
-          description: 'Automatically identifies and extracts all invoice fields without manual configuration.',
+          description: 'Automatically identifies and extracts all expense document fields without manual configuration.',
           details: [
             'Vendor information detection',
             'Line item parsing',
@@ -67,7 +67,7 @@ export default function FeaturesPage() {
         {
           icon: Zap,
           title: 'Lightning Fast Processing',
-          description: 'Process invoices in under 60 seconds, regardless of complexity or size.',
+          description: 'Process expense documents in under 60 seconds, regardless of complexity or size.',
           details: [
             'Parallel processing',
             'Batch optimization',
@@ -78,7 +78,7 @@ export default function FeaturesPage() {
         {
           icon: Languages,
           title: 'Multi-Language Support',
-          description: 'Process invoices in any language with automatic translation capabilities.',
+          description: 'Process expense documents in any language with automatic translation capabilities.',
           details: [
             '35+ supported languages',
             'Automatic language detection',
@@ -95,7 +95,7 @@ export default function FeaturesPage() {
         {
           icon: Upload,
           title: 'Bulk Upload & Processing',
-          description: 'Upload hundreds of invoices at once with drag-and-drop or API integration.',
+          description: 'Upload hundreds of expense documents at once with drag-and-drop or API integration.',
           details: [
             'Multi-file selection',
             'Folder upload',
@@ -128,7 +128,7 @@ export default function FeaturesPage() {
         {
           icon: Clock,
           title: 'Scheduled Processing',
-          description: 'Schedule automatic processing of invoices at specific times.',
+          description: 'Schedule automatic processing of expense documents at specific times.',
           details: [
             'Recurring schedules',
             'Time zone support',

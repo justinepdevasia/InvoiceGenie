@@ -6,8 +6,8 @@ import { Toaster } from "sonner"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Invoice Genie - AI-Powered Invoice Processing",
-  description: "Transform your invoices into structured data with AI-powered OCR technology",
+  title: "Expensa - AI-Powered Expense Document Processing",
+  description: "Transform your expense documents into structured data with AI-powered OCR technology",
 }
 
 export default function RootLayout({

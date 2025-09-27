@@ -1,15 +1,15 @@
-# Invoice Genie - Project Documentation
+# Expensa - Project Documentation
 
 ## 📋 Project Overview
 
-**Invoice Genie** is an AI-powered invoice processing platform that transforms PDFs, images, and multi-page invoices into structured data using intelligent OCR technology powered by Mistral AI.
+**Expensa** is an AI-powered expense document processing platform that transforms PDFs, images, and multi-page expense documents (invoices, receipts, bills, statements) into structured data using intelligent OCR technology powered by Mistral AI.
 
 ### Key Features
 - **Multi-format Support**: Process PDFs, JPG, PNG, and multi-page documents
 - **AI-Powered OCR**: Mistral AI for accurate data extraction
 - **Smart Filtering**: Advanced search and filter capabilities
 - **CSV Export**: Export structured data for accounting software
-- **Project Management**: Organize invoices by clients/vendors/periods
+- **Project Management**: Organize expense documents by clients/vendors/periods
 - **Secure Authentication**: User authentication with Supabase
 - **Flexible Pricing**: Free tier + paid plans via Stripe
 

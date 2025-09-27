@@ -46,7 +46,7 @@ export default function LoginPage() {
           </div>
           <CardTitle className="text-2xl">Welcome back</CardTitle>
           <CardDescription>
-            Login to your Invoice Genie account
+            Login to your Expensa account
           </CardDescription>
         </CardHeader>
         <CardContent>

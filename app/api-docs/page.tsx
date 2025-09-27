@@ -349,7 +349,7 @@ async function processInvoice(invoiceId) {
                 <Sparkles className="h-4 w-4 text-yellow-500 absolute -top-1 -right-1" />
               </div>
               <span className="font-bold text-2xl bg-gradient-to-r from-rose-500 to-pink-600 bg-clip-text text-transparent">
-                Invoice Genie
+                Expensa
               </span>
             </Link>
           </div>
@@ -380,7 +380,7 @@ async function processInvoice(invoiceId) {
             API Documentation
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-            Integrate Invoice Genie's powerful OCR capabilities into your applications with our RESTful API
+            Integrate Expensa's powerful OCR capabilities into your applications with our RESTful API
           </p>
         </div>
 
@@ -736,7 +736,7 @@ async function processInvoice(invoiceId) {
                       <Badge variant="outline">Community</Badge>
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                      Ruby gem for Invoice Genie API
+                      Ruby gem for Expensa API
                     </p>
                     <CodeBlock code="gem install invoice_genie" language="bash" />
                   </div>

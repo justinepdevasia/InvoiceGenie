@@ -13,8 +13,8 @@ import { FileText, Home, FolderOpen, Upload, CreditCard, Settings, LogOut, Menu,
 const sidebarItems = [
   { href: '/dashboard', icon: Home, label: 'Overview' },
   { href: '/dashboard/projects', icon: FolderOpen, label: 'Projects' },
-  { href: '/dashboard/invoices', icon: FileStack, label: 'All Invoices' },
-  { href: '/dashboard/upload', icon: Upload, label: 'Upload Invoice' },
+  { href: '/dashboard/invoices', icon: FileStack, label: 'All Documents' },
+  { href: '/dashboard/upload', icon: Upload, label: 'Upload Document' },
   { href: '/dashboard/integrations', icon: Plug, label: 'Integrations' },
   { href: '/dashboard/analytics', icon: BarChart3, label: 'Analytics' },
   { href: '/dashboard/billing', icon: CreditCard, label: 'Billing' },
@@ -36,7 +36,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="h-full bg-muted/50">
       <div className="flex h-16 items-center gap-2 px-6 border-b">
         <FileText className="h-6 w-6 text-primary" />
-        <span className="font-bold text-xl">Invoice Genie</span>
+        <span className="font-bold text-xl">Expensa</span>
       </div>
       <nav className="flex-1 px-4 py-6 space-y-1">
         {sidebarItems.map((item) => {

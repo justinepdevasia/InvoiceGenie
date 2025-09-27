@@ -16,7 +16,7 @@ export default function HomePage() {
               <Sparkles className="h-4 w-4 text-yellow-500 absolute -top-1 -right-1" />
             </div>
             <span className="font-bold text-2xl bg-gradient-to-r from-rose-500 to-pink-600 bg-clip-text text-transparent">
-              Invoice Genie
+              Expensa
             </span>
           </div>
           <div className="flex items-center space-x-4">
@@ -60,13 +60,13 @@ export default function HomePage() {
             Powered by Advanced AI
           </Badge>
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
-            Transform Your Invoices into
+            Transform Your Expense Documents into
             <span className="block mt-2 bg-gradient-to-r from-rose-500 via-pink-500 to-purple-500 bg-clip-text text-transparent">
               Structured Data Magic
             </span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg md:text-xl text-gray-600 dark:text-gray-300 leading-relaxed">
-            Upload any invoice format and watch as our AI instantly extracts, structures, and organizes your data. 
+            Upload any expense document format - invoices, receipts, bills, statements - and watch as our AI instantly extracts, structures, and organizes your data.
             No more manual entry. Just pure efficiency.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
@@ -107,7 +107,7 @@ export default function HomePage() {
             <div className="text-4xl font-bold bg-gradient-to-r from-rose-500 to-pink-600 bg-clip-text text-transparent">
               10M+
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Invoices Processed</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Documents Processed</div>
           </div>
           <div className="text-center">
             <div className="text-4xl font-bold bg-gradient-to-r from-rose-500 to-pink-600 bg-clip-text text-transparent">
@@ -139,7 +139,7 @@ export default function HomePage() {
             </Badge>
             <h2 className="text-4xl md:text-5xl font-bold mb-4">
               Everything You Need to
-              <span className="block text-gradient">Process Invoices at Scale</span>
+              <span className="block text-gradient">Process Expense Documents at Scale</span>
             </h2>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -152,7 +152,7 @@ export default function HomePage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  PDFs, images, scanned docs, even photos. Our AI handles every format flawlessly.
+                  PDFs, images, scanned docs, even photos. From invoices to receipts - our AI handles every expense document format flawlessly.
                 </p>
               </CardContent>
             </Card>
@@ -166,7 +166,7 @@ export default function HomePage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Our AI processes invoices in seconds with 99.9% accuracy guaranteed.
+                  Our AI processes expense documents in seconds with 99.9% accuracy guaranteed.
                 </p>
               </CardContent>
             </Card>
@@ -180,7 +180,7 @@ export default function HomePage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Filter, search, and analyze your invoice data with powerful insights.
+                  Filter, search, and analyze your expense data with powerful insights.
                 </p>
               </CardContent>
             </Card>
@@ -194,7 +194,7 @@ export default function HomePage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Export to CSV, Excel, or integrate directly with your accounting software.
+                  Export to CSV, Excel, or integrate directly with your expense management and accounting software.
                 </p>
               </CardContent>
             </Card>
@@ -211,29 +211,29 @@ export default function HomePage() {
             </Badge>
             <h2 className="text-4xl md:text-5xl font-bold">
               Three Simple Steps to
-              <span className="block text-gradient">Invoice Freedom</span>
+              <span className="block text-gradient">Expense Document Freedom</span>
             </h2>
           </div>
           <div className="space-y-8">
             {[
               {
                 number: "01",
-                title: "Upload Your Invoices",
-                description: "Drag and drop or select multiple invoices in any format. Our system handles bulk uploads seamlessly.",
+                title: "Upload Your Documents",
+                description: "Drag and drop or select multiple expense documents in any format. Our system handles bulk uploads seamlessly.",
                 icon: Upload,
                 color: "from-blue-500 to-cyan-500"
               },
               {
                 number: "02", 
                 title: "AI Magic Happens",
-                description: "Our intelligent OCR extracts vendor details, line items, totals, dates, and more with incredible accuracy.",
+                description: "Our intelligent OCR extracts vendor details, line items, totals, dates, tax info, and more with incredible accuracy.",
                 icon: Zap,
                 color: "from-purple-500 to-pink-500"
               },
               {
                 number: "03",
                 title: "Export & Integrate",
-                description: "Review, edit if needed, then export to CSV or connect directly to your accounting tools.",
+                description: "Review, edit if needed, then export to CSV or connect directly to your expense management and accounting tools.",
                 icon: Download,
                 color: "from-green-500 to-emerald-500"
               }
@@ -376,13 +376,13 @@ export default function HomePage() {
               {
                 name: "Sarah Chen",
                 role: "CFO at TechCorp",
-                content: "Invoice Genie saved us 40 hours per week. The AI accuracy is mind-blowing!",
+                content: "Expensa saved us 40 hours per week on expense processing. The AI accuracy is mind-blowing!",
                 rating: 5
               },
               {
                 name: "Michael Rodriguez",
                 role: "Accounting Manager",
-                content: "We process 1000+ invoices monthly. This tool is a game-changer for our team.",
+                content: "We process 1000+ expense documents monthly. This tool is a game-changer for our team.",
                 rating: 5
               },
               {
@@ -426,10 +426,10 @@ export default function HomePage() {
               </Badge>
               <h2 className="text-4xl md:text-5xl font-bold mb-4">
                 Ready to Transform Your
-                <span className="block text-gradient">Invoice Processing?</span>
+                <span className="block text-gradient">Expense Management?</span>
               </h2>
               <p className="text-xl text-gray-600 dark:text-gray-400 mb-8">
-                Join 50,000+ businesses saving hours every week. Start with 10 free pages today.
+                Join 50,000+ businesses streamlining their expense workflows. Start with 10 free pages today.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link href="/signup">
@@ -461,11 +461,11 @@ export default function HomePage() {
                   <Sparkles className="h-4 w-4 text-yellow-500 absolute -top-1 -right-1" />
                 </div>
                 <span className="font-bold text-xl bg-gradient-to-r from-rose-500 to-pink-600 bg-clip-text text-transparent">
-                  Invoice Genie
+                  Expensa
                 </span>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Intelligent invoice processing powered by advanced AI. Making finance teams happier, one invoice at a time.
+                Intelligent expense document processing powered by advanced AI. Making finance teams happier, one document at a time.
               </p>
               <div className="flex gap-4 mt-4">
                 {/* Social icons could go here */}
@@ -500,7 +500,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="mt-8 pt-8 border-t text-center text-sm text-gray-600 dark:text-gray-400">
-            <p>© 2024 Invoice Genie. All rights reserved. Made with ❤️ for finance teams everywhere.</p>
+            <p>© 2024 Expensa. All rights reserved. Made with ❤️ for finance teams everywhere.</p>
           </div>
         </div>
       </footer>

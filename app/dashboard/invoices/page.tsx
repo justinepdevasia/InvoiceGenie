@@ -304,13 +304,13 @@ export default function InvoicesPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Invoices</h1>
-          <p className="text-muted-foreground">Manage and track all your processed invoices</p>
+          <h1 className="text-3xl font-bold">Documents</h1>
+          <p className="text-muted-foreground">Manage and track all your processed expense documents</p>
         </div>
         <Link href="/dashboard/upload">
           <Button className="bg-gradient-to-r from-rose-500 to-pink-600">
             <Upload className="h-4 w-4 mr-2" />
-            Upload Invoice
+            Upload Document
           </Button>
         </Link>
       </div>
@@ -319,13 +319,13 @@ export default function InvoicesPage() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Invoices</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Documents</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{filteredInvoices.length}</div>
             <p className="text-xs text-muted-foreground">
-              {invoices.length} total in system
+              {invoices.length} total documents in system
             </p>
           </CardContent>
         </Card>
@@ -338,7 +338,7 @@ export default function InvoicesPage() {
           <CardContent>
             <div className="text-2xl font-bold">${totalAmount.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
-              Across all invoices
+              Across all documents
             </p>
           </CardContent>
         </Card>
@@ -351,7 +351,7 @@ export default function InvoicesPage() {
           <CardContent>
             <div className="text-2xl font-bold">${completedAmount.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
-              {filteredInvoices.filter(inv => inv.status === 'completed').length} invoices
+              {filteredInvoices.filter(inv => inv.status === 'completed').length} documents
             </p>
           </CardContent>
         </Card>
@@ -364,7 +364,7 @@ export default function InvoicesPage() {
           <CardContent>
             <div className="text-2xl font-bold">${processingAmount.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
-              {filteredInvoices.filter(inv => inv.status === 'processing').length} invoices
+              {filteredInvoices.filter(inv => inv.status === 'processing').length} documents
             </p>
           </CardContent>
         </Card>
@@ -378,7 +378,7 @@ export default function InvoicesPage() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Search invoices..."
+                  placeholder="Search documents..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-9"
@@ -449,7 +449,7 @@ export default function InvoicesPage() {
                       }}
                     />
                   </TableHead>
-                  <TableHead>Invoice #</TableHead>
+                  <TableHead>Doc #</TableHead>
                   <TableHead>Vendor</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Date</TableHead>
@@ -543,7 +543,7 @@ export default function InvoicesPage() {
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-4">
               <p className="text-sm text-muted-foreground">
-                Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredInvoices.length)} of {filteredInvoices.length} invoices
+                Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredInvoices.length)} of {filteredInvoices.length} documents
               </p>
               <div className="flex gap-2">
                 <Button

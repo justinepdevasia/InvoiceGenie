@@ -160,11 +160,14 @@ function UploadPageContent() {
               },
             });
 
+            // Convert file to ArrayBuffer for S3 upload
+            const arrayBuffer = await fileWrapper.file.arrayBuffer();
+
             // Upload file using S3 protocol
             const uploadCommand = new PutObjectCommand({
               Bucket: 'documents',
               Key: fileName,
-              Body: fileWrapper.file,
+              Body: new Uint8Array(arrayBuffer),
               ContentType: fileWrapper.type || 'application/pdf',
             });
 
@@ -239,9 +242,8 @@ function UploadPageContent() {
           console.log('OCR Response:', responseText);
 
           if (ocrResponse.ok) {
-            let ocrResult;
             try {
-              ocrResult = JSON.parse(responseText);
+              JSON.parse(responseText); // Validate response is valid JSON
             } catch (e) {
               console.error('Failed to parse OCR response:', responseText);
               throw new Error('Invalid OCR response');

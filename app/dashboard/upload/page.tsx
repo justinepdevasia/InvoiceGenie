@@ -139,43 +139,26 @@ function UploadPageContent() {
           
           const fileName = `${user.id}/${selectedProject}/${Date.now()}-${fileWrapper.name}`;
           
-          // Upload to Supabase storage using S3 protocol with user-scoped credentials
+          // Upload to Supabase storage (fallback to regular API for reliability)
           let filePath = fileName;
           try {
-            // Get the current session for S3 authentication
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) {
-              throw new Error('No active session');
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from('documents')
+              .upload(fileName, fileWrapper.file, {
+                contentType: fileWrapper.type || 'application/pdf',
+                cacheControl: '3600',
+                upsert: false
+              });
+
+            if (uploadError) {
+              console.error('Storage upload failed:', uploadError);
+              throw new Error(`Storage upload failed: ${uploadError.message}`);
             }
 
-            // Create S3 client with user-scoped credentials
-            const s3Client = new S3Client({
-              forcePathStyle: true,
-              region: 'us-east-1', // Supabase default region
-              endpoint: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/s3`,
-              credentials: {
-                accessKeyId: process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0] || '', // project_ref
-                secretAccessKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
-                sessionToken: session.access_token,
-              },
-            });
-
-            // Convert file to ArrayBuffer for S3 upload
-            const arrayBuffer = await fileWrapper.file.arrayBuffer();
-
-            // Upload file using S3 protocol
-            const uploadCommand = new PutObjectCommand({
-              Bucket: 'documents',
-              Key: fileName,
-              Body: new Uint8Array(arrayBuffer),
-              ContentType: fileWrapper.type || 'application/pdf',
-            });
-
-            await s3Client.send(uploadCommand);
-            filePath = fileName;
+            filePath = uploadData.path;
             console.log('File uploaded successfully to:', filePath);
           } catch (storageErr) {
-            console.error('S3 upload error:', storageErr);
+            console.error('Storage upload error:', storageErr);
             throw new Error(`Failed to upload file: ${storageErr instanceof Error ? storageErr.message : 'Unknown error'}`);
           }
 

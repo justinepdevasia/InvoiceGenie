@@ -222,7 +222,7 @@ export async function POST(request: NextRequest) {
     console.log('OCR Response Data:', JSON.stringify(ocrData, null, 2));
     
     // Parse the extracted data from Mistral OCR response
-    let extractedData;
+    let extractedData: any = {};
     let ocrText = '';
 
     try {
@@ -287,7 +287,7 @@ export async function POST(request: NextRequest) {
       } else {
         // Fallback to basic text parsing with empty text
         extractedData = parseTextToInvoiceData(ocrText || '');
-        extractedData.error_details = 'OCR parsing failed: ' + parseError.message;
+        extractedData.error_details = 'OCR parsing failed: ' + (parseError instanceof Error ? parseError.message : String(parseError));
       }
     }
     
@@ -536,7 +536,7 @@ function parseTextToInvoiceData(text: string) {
     /\$\s*([0-9,]+\.?[0-9]*)/g
   ];
 
-  let amounts: number[] = [];
+  const amounts: number[] = [];
   for (const pattern of amountPatterns) {
     const matches = text.matchAll(pattern);
     for (const match of matches) {

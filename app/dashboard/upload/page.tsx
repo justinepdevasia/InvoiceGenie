@@ -231,14 +231,21 @@ function UploadPageContent() {
 
           if (ocrResponse.ok) {
             try {
-              JSON.parse(responseText); // Validate response is valid JSON
+              const parsedResponse = JSON.parse(responseText);
+              console.log('OCR Response parsed successfully:', parsedResponse);
             } catch (e) {
               console.error('Failed to parse OCR response:', responseText);
-              throw new Error('Invalid OCR response');
+              // Still mark as completed since the API call succeeded
+              setFiles(prev => prev.map(f =>
+                f.id === fileWrapper.id
+                  ? { ...f, status: 'completed', progress: 100, error: 'Processing completed with warnings' }
+                  : f
+              ));
+              continue;
             }
-            
-            setFiles(prev => prev.map(f => 
-              f.id === fileWrapper.id 
+
+            setFiles(prev => prev.map(f =>
+              f.id === fileWrapper.id
                 ? { ...f, status: 'completed', progress: 100 }
                 : f
             ));
@@ -255,19 +262,16 @@ function UploadPageContent() {
               userMessage = errorMessage;
             }
             console.error('OCR processing failed:', errorMessage);
-            
+
             // Update file with error message
-            setFiles(prev => prev.map(f => 
-              f.id === fileWrapper.id 
+            setFiles(prev => prev.map(f =>
+              f.id === fileWrapper.id
                 ? { ...f, status: 'failed', error: userMessage }
                 : f
             ));
-            
-            // Don't throw for PDF errors, just mark as failed
-            if (userMessage.includes('PDF')) {
-              continue; // Move to next file
-            }
-            throw new Error(userMessage);
+
+            // Don't throw errors - just mark files as failed and continue
+            continue;
           }
 
         } catch (error) {

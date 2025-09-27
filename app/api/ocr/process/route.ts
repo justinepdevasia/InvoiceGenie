@@ -235,18 +235,60 @@ export async function POST(request: NextRequest) {
         ocrText = ocrData.text;
         console.log('Found direct text:', ocrText.substring(0, 500));
       } else {
-        console.error('No text found in OCR response:', ocrData);
-        throw new Error('No text extracted from document');
+        console.error('No text found in OCR response. Response details:', {
+          pages: ocrData.pages,
+          pageCount: ocrData.pages?.length,
+          usage: ocrData.usage_info,
+          model: ocrData.model
+        });
+
+        // Try vision model fallback for images if OCR failed to extract text
+        if (fileType && fileType.startsWith('image/')) {
+          console.log('No OCR text found, attempting vision model fallback for image...');
+          return fallbackToVisionModel(
+            dataUrl,
+            invoiceId,
+            user.id,
+            supabase,
+            MISTRAL_API_KEY
+          );
+        } else {
+          // For PDFs, create a basic record with minimal data
+          console.log('No OCR text found for PDF, creating basic record...');
+          extractedData = {
+            invoice_number: 'FAILED_TO_EXTRACT',
+            vendor_name: 'Unknown Vendor',
+            total_amount: 0,
+            currency: 'USD',
+            error_details: 'OCR failed to extract text from document'
+          };
+        }
       }
 
-      // Extract structured data directly from OCR text (no AI needed - saves costs!)
-      console.log('Extracting data directly from OCR text...');
-      extractedData = parseTextToInvoiceData(ocrText);
+      if (ocrText) {
+        // Extract structured data directly from OCR text (no AI needed - saves costs!)
+        console.log('Extracting data directly from OCR text...');
+        extractedData = parseTextToInvoiceData(ocrText);
+      }
     } catch (parseError) {
       console.error('Error processing OCR data:', parseError);
       console.error('Raw OCR data:', ocrData);
-      // Fallback to basic text parsing
-      extractedData = parseTextToInvoiceData(ocrText);
+
+      // Try vision model fallback for images
+      if (fileType && fileType.startsWith('image/')) {
+        console.log('OCR parsing failed, attempting vision model fallback for image...');
+        return fallbackToVisionModel(
+          dataUrl,
+          invoiceId,
+          user.id,
+          supabase,
+          MISTRAL_API_KEY
+        );
+      } else {
+        // Fallback to basic text parsing with empty text
+        extractedData = parseTextToInvoiceData(ocrText || '');
+        extractedData.error_details = 'OCR parsing failed: ' + parseError.message;
+      }
     }
     
     console.log('Extracted data:', extractedData);
@@ -453,6 +495,19 @@ async function fallbackToVisionModel(
 // Helper function to parse OCR text into structured invoice data
 function parseTextToInvoiceData(text: string) {
   const data: any = {};
+
+  // Handle empty or invalid text
+  if (!text || typeof text !== 'string' || text.trim().length === 0) {
+    console.log('Empty or invalid text provided to parseTextToInvoiceData');
+    return {
+      invoice_number: 'NO_TEXT_EXTRACTED',
+      vendor_name: 'Unknown Vendor',
+      total_amount: 0,
+      currency: 'USD',
+      error_details: 'No text content to parse'
+    };
+  }
+
   const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
 
   // Extract invoice number - try multiple patterns

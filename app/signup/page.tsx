@@ -38,13 +38,14 @@ export default function SignupPage() {
     setLoading(true)
 
     const supabase = createClient()
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           full_name: fullName,
         },
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`
       },
     })
 
@@ -54,9 +55,7 @@ export default function SignupPage() {
     } else {
       setSuccess(true)
       setLoading(false)
-      setTimeout(() => {
-        router.push('/dashboard')
-      }, 2000)
+      // Don't redirect immediately - wait for email confirmation
     }
   }
 
@@ -78,9 +77,18 @@ export default function SignupPage() {
               <Alert>
                 <CheckCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Account created successfully! Redirecting to dashboard...
+                  <div className="space-y-2">
+                    <p className="font-semibold">Check your email!</p>
+                    <p className="text-sm">We've sent a confirmation link to <strong>{email}</strong>. Click the link in the email to verify your account and complete the signup process.</p>
+                    <p className="text-xs text-muted-foreground">Don't see the email? Check your spam folder or wait a few minutes and try again.</p>
+                  </div>
                 </AlertDescription>
               </Alert>
+              <div className="text-center">
+                <Link href="/login" className="text-primary hover:underline text-sm">
+                  Already confirmed? Login here
+                </Link>
+              </div>
             </div>
           ) : (
             <form onSubmit={handleSignup} className="space-y-4">

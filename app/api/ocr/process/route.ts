@@ -422,12 +422,62 @@ export async function POST(request: NextRequest) {
     // Update invoice status
     await supabase
       .from('invoices')
-      .update({ 
+      .update({
         processing_status: 'completed',
         page_count: 1
       })
       .eq('id', invoiceId)
       .eq('user_id', user.id);
+
+    // Send email notification (non-blocking)
+    try {
+      // Get project information for the email
+      const { data: invoiceWithProject } = await supabase
+        .from('invoices')
+        .select('projects!inner(name)')
+        .eq('id', invoiceId)
+        .eq('user_id', user.id)
+        .single();
+
+      const projectData = Array.isArray(invoiceWithProject?.projects)
+        ? invoiceWithProject.projects[0]
+        : invoiceWithProject?.projects;
+      const projectName = projectData?.name || 'Unknown Project';
+
+      // Get user email from profile or auth
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', user.id)
+        .single();
+
+      const userEmail = profile?.email || user.email;
+
+      if (userEmail) {
+        // Send email notification
+        await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/email/send`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user.id}`, // Simple auth check
+          },
+          body: JSON.stringify({
+            to: userEmail,
+            subject: 'Invoice Processed Successfully',
+            type: 'invoice_processed',
+            data: {
+              invoiceNumber: extractedData.invoice_number || 'Unknown',
+              vendorName: extractedData.vendor_name || 'Unknown Vendor',
+              amount: (extractedData.total_amount || extractedData.total || 0).toFixed(2),
+              projectName: projectName
+            }
+          })
+        });
+      }
+    } catch (emailError) {
+      // Don't fail the main process if email fails
+      console.error('Failed to send email notification:', emailError);
+    }
 
     // Update user's usage
     await incrementUsage(user.id, 1);

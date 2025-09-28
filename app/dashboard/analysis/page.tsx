@@ -11,6 +11,10 @@ import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Textarea } from '@/components/ui/textarea'
+import { toast } from 'sonner'
 import {
   BarChart,
   Bar,
@@ -48,7 +52,11 @@ import {
   Users,
   Settings,
   FileStack,
-  FolderOpen
+  FolderOpen,
+  Mail,
+  ChevronDown,
+  Send,
+  Loader2
 } from 'lucide-react'
 import { format, subMonths, startOfMonth, endOfMonth, parseISO, isValid } from 'date-fns'
 
@@ -117,6 +125,13 @@ export default function AnalysisPage() {
   const [invoiceData, setInvoiceData] = useState<InvoiceData[]>([])
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false)
+  const [emailSending, setEmailSending] = useState(false)
+  const [emailForm, setEmailForm] = useState({
+    to: '',
+    subject: '',
+    message: ''
+  })
   const [filters, setFilters] = useState<AnalysisFilters>({
     projects: [],
     dateRange: {
@@ -612,6 +627,196 @@ export default function AnalysisPage() {
     }
   }
 
+  const generateCSVData = () => {
+    const csvData = []
+
+    // Add header row
+    csvData.push([
+      'Invoice Date',
+      'Invoice Number',
+      'Vendor Name',
+      'Project Name',
+      'Total Amount',
+      'Subtotal',
+      'Tax Amount',
+      'Currency',
+      'Payment Method',
+      'Category'
+    ])
+
+    // Add invoice data rows
+    filteredData.forEach(invoice => {
+      // Auto-categorize for export
+      let category = 'Other'
+      const vendor = invoice.vendor_name?.toLowerCase() || ''
+      const description = invoice.raw_ocr_data?.line_items?.[0]?.description?.toLowerCase() || ''
+
+      if (vendor.includes('aws') || vendor.includes('google') || vendor.includes('microsoft') || vendor.includes('supabase')) {
+        category = 'Technology & Software'
+      } else if (vendor.includes('home depot') || vendor.includes('lowes') || description.includes('concrete')) {
+        category = 'Hardware & Materials'
+      } else if (vendor.includes('office') || description.includes('office')) {
+        category = 'Office Supplies'
+      } else if (vendor.includes('travel') || vendor.includes('hotel') || vendor.includes('airline')) {
+        category = 'Travel & Transportation'
+      } else if (vendor.includes('restaurant') || vendor.includes('food')) {
+        category = 'Meals & Entertainment'
+      } else if (description.includes('subscription') || description.includes('plan')) {
+        category = 'Subscriptions & Services'
+      }
+
+      csvData.push([
+        invoice.invoice_date || '',
+        invoice.invoice_number || '',
+        invoice.vendor_name || '',
+        invoice.project_name || '',
+        invoice.total_amount.toFixed(2),
+        invoice.subtotal.toFixed(2),
+        invoice.tax_amount.toFixed(2),
+        invoice.currency || 'USD',
+        invoice.payment_method || '',
+        category
+      ])
+    })
+
+    // Add summary statistics as separate section
+    csvData.push([]) // Empty row
+    csvData.push(['SUMMARY STATISTICS'])
+    csvData.push(['Metric', 'Value'])
+    csvData.push(['Total Spending', `$${summaryStats.totalSpending.toFixed(2)}`])
+    csvData.push(['Total Transactions', summaryStats.transactionCount.toString()])
+    csvData.push(['Average Transaction', `$${summaryStats.averageTransaction.toFixed(2)}`])
+    csvData.push(['Tax Paid', `$${summaryStats.taxPaid.toFixed(2)}`])
+    csvData.push(['Monthly Growth', `${summaryStats.monthlyGrowth.toFixed(1)}%`])
+    csvData.push(['Top Vendor', summaryStats.topVendor])
+    csvData.push(['Top Payment Method', summaryStats.topPaymentMethod])
+
+    // Add vendor analysis
+    csvData.push([]) // Empty row
+    csvData.push(['VENDOR ANALYSIS'])
+    csvData.push(['Vendor', 'Total Spent', 'Transaction Count', 'Average per Transaction', 'Percentage of Total'])
+    vendorAnalysis.forEach(vendor => {
+      csvData.push([
+        vendor.vendor,
+        vendor.total.toFixed(2),
+        vendor.count.toString(),
+        vendor.average.toFixed(2),
+        `${vendor.percentage.toFixed(1)}%`
+      ])
+    })
+
+    // Add category analysis
+    csvData.push([]) // Empty row
+    csvData.push(['CATEGORY ANALYSIS'])
+    csvData.push(['Category', 'Total Spent', 'Transaction Count', 'Percentage of Total'])
+    categoryAnalysis.forEach(category => {
+      csvData.push([
+        category.category,
+        category.total.toFixed(2),
+        category.count.toString(),
+        `${category.percentage.toFixed(1)}%`
+      ])
+    })
+
+    // Add forecasting data if available
+    if (forecastData.length > 0) {
+      csvData.push([]) // Empty row
+      csvData.push(['SPENDING FORECAST'])
+      csvData.push(['Month', 'Predicted Amount', 'Lower Bound', 'Upper Bound', 'Confidence'])
+      forecastData.forEach(forecast => {
+        csvData.push([
+          forecast.month,
+          forecast.predicted.toFixed(2),
+          forecast.lower.toFixed(2),
+          forecast.upper.toFixed(2),
+          `${(forecast.confidence * 100).toFixed(0)}%`
+        ])
+      })
+    }
+
+    // Convert to CSV string
+    return csvData.map(row =>
+      row.map(field => {
+        // Escape fields that contain commas or quotes
+        if (typeof field === 'string' && (field.includes(',') || field.includes('"') || field.includes('\n'))) {
+          return `"${field.replace(/"/g, '""')}"`
+        }
+        return field
+      }).join(',')
+    ).join('\n')
+  }
+
+  const openEmailDialog = () => {
+    // Pre-fill email form
+    const reportPeriod = `${filters.dateRange.start} to ${filters.dateRange.end}`
+    setEmailForm({
+      to: '',
+      subject: `Expense Analysis Report - ${reportPeriod}`,
+      message: `Hi,
+
+Please find attached the expense analysis report for the period ${reportPeriod}.
+
+Summary:
+• Total Spending: $${summaryStats.totalSpending.toFixed(2)}
+• Total Transactions: ${summaryStats.transactionCount}
+• Top Vendor: ${summaryStats.topVendor}
+
+The attached CSV file contains detailed transaction data, vendor analysis, and spending forecasts.
+
+Best regards`
+    })
+    setEmailDialogOpen(true)
+  }
+
+  const sendAnalysisEmail = async () => {
+    try {
+      setEmailSending(true)
+
+      if (!emailForm.to.trim()) {
+        toast.error('Please enter a recipient email address')
+        return
+      }
+
+      // Generate CSV data
+      const csvData = generateCSVData()
+      const reportPeriod = `${filters.dateRange.start} to ${filters.dateRange.end}`
+
+      // Send email
+      const response = await fetch('/api/email/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: emailForm.to.trim(),
+          subject: emailForm.subject || `Expense Analysis Report - ${reportPeriod}`,
+          type: 'analysis_report',
+          data: {
+            csvData,
+            summaryStats,
+            reportPeriod,
+            customMessage: emailForm.message
+          }
+        })
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        toast.success(`Analysis report sent successfully to ${emailForm.to}`)
+        setEmailDialogOpen(false)
+        setEmailForm({ to: '', subject: '', message: '' })
+      } else {
+        toast.error(result.error || 'Failed to send email')
+      }
+    } catch (error) {
+      console.error('Error sending email:', error)
+      toast.error('Failed to send email. Please try again.')
+    } finally {
+      setEmailSending(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -675,10 +880,26 @@ export default function AnalysisPage() {
           </h1>
           <p className="text-muted-foreground">Comprehensive insights into your spending patterns</p>
         </div>
-        <Button onClick={exportToCSV} className="bg-gradient-to-r from-rose-500 to-pink-600">
-          <Download className="h-4 w-4 mr-2" />
-          Export CSV
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button className="bg-gradient-to-r from-rose-500 to-pink-600">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+              <ChevronDown className="h-4 w-4 ml-2" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={exportToCSV}>
+              <Download className="h-4 w-4 mr-2" />
+              Download CSV
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={openEmailDialog}>
+              <Mail className="h-4 w-4 mr-2" />
+              Email Report
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Filters */}
@@ -1167,6 +1388,91 @@ export default function AnalysisPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Email Dialog */}
+      <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Email Analysis Report
+            </DialogTitle>
+            <DialogDescription>
+              Send the expense analysis report with CSV attachment to specified recipients.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email-to">Recipient Email *</Label>
+              <Input
+                id="email-to"
+                type="email"
+                placeholder="accountant@company.com"
+                value={emailForm.to}
+                onChange={(e) => setEmailForm(prev => ({ ...prev, to: e.target.value }))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email-subject">Subject</Label>
+              <Input
+                id="email-subject"
+                placeholder="Expense Analysis Report"
+                value={emailForm.subject}
+                onChange={(e) => setEmailForm(prev => ({ ...prev, subject: e.target.value }))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email-message">Message</Label>
+              <Textarea
+                id="email-message"
+                placeholder="Optional message to include in the email..."
+                value={emailForm.message}
+                onChange={(e) => setEmailForm(prev => ({ ...prev, message: e.target.value }))}
+                rows={6}
+              />
+            </div>
+
+            <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
+              <h4 className="font-medium mb-2 flex items-center gap-2">
+                <FileBarChart className="h-4 w-4" />
+                Report Summary
+              </h4>
+              <div className="text-sm space-y-1">
+                <p>• Total Spending: ${summaryStats.totalSpending.toFixed(2)}</p>
+                <p>• Transactions: {summaryStats.transactionCount}</p>
+                <p>• Period: {filters.dateRange.start} to {filters.dateRange.end}</p>
+                <p>• Includes: CSV with transactions, vendor analysis, forecasts</p>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEmailDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={sendAnalysisEmail}
+              disabled={emailSending || !emailForm.to.trim()}
+              className="bg-gradient-to-r from-rose-500 to-pink-600"
+            >
+              {emailSending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Send Report
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

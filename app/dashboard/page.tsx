@@ -85,8 +85,8 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Welcome back!</h1>
-          <p className="text-muted-foreground text-lg">Here's an overview of your expense document processing activity</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">Overview of your expense document processing</p>
         </div>
         <div className="flex gap-3">
           <Link href="/dashboard/projects">
@@ -96,7 +96,7 @@ export default function DashboardPage() {
             </Button>
           </Link>
           <Link href="/dashboard/invoices?tab=upload">
-            <Button className="bg-primary hover:bg-primary/90">
+            <Button>
               <Upload className="mr-2 h-4 w-4" />
               Upload Document
             </Button>
@@ -106,36 +106,30 @@ export default function DashboardPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-6 md:grid-cols-4">
-        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-blue-500">
+        <Card className="hover:shadow-sm transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Projects</CardTitle>
-            <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
-              <FolderOpen className="h-4 w-4 text-blue-600" />
-            </div>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Projects</CardTitle>
+            <FolderOpen className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalProjects}</div>
             <p className="text-xs text-muted-foreground">Active projects</p>
           </CardContent>
         </Card>
-        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-green-500">
+        <Card className="hover:shadow-sm transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Documents</CardTitle>
-            <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
-              <FileText className="h-4 w-4 text-green-600" />
-            </div>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Documents</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalInvoices}</div>
             <p className="text-xs text-muted-foreground">Processed documents</p>
           </CardContent>
         </Card>
-        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-purple-500">
+        <Card className="hover:shadow-sm transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Pages Used</CardTitle>
-            <div className="h-8 w-8 bg-purple-100 rounded-full flex items-center justify-center">
-              <Activity className="h-4 w-4 text-purple-600" />
-            </div>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Pages Used</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -147,16 +141,14 @@ export default function DashboardPage() {
             </p>
           </CardContent>
         </Card>
-        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-orange-500">
+        <Card className="hover:shadow-sm transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Plan Status</CardTitle>
-            <div className="h-8 w-8 bg-orange-100 rounded-full flex items-center justify-center">
-              <Zap className="h-4 w-4 text-orange-600" />
-            </div>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Plan Status</CardTitle>
+            <Zap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">Free</div>
-            <Link href="/dashboard/billing" className="text-xs text-primary hover:underline font-medium">
+            <Link href="/dashboard/billing" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
               Upgrade plan →
             </Link>
           </CardContent>
@@ -254,12 +246,12 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        invoice.processing_status === 'completed' 
-                          ? 'bg-green-100 text-green-700' 
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        invoice.processing_status === 'completed'
+                          ? 'bg-muted text-foreground'
                           : invoice.processing_status === 'processing'
-                          ? 'bg-yellow-100 text-yellow-700'
-                          : 'bg-gray-100 text-gray-700'
+                          ? 'bg-muted text-muted-foreground'
+                          : 'bg-muted text-muted-foreground'
                       }`}>
                         {invoice.processing_status}
                       </span>
@@ -275,38 +267,35 @@ export default function DashboardPage() {
 
       {/* Getting Started Guide */}
       {stats.totalInvoices === 0 && (
-        <Card>
+        <Card className="border-dashed">
           <CardHeader>
-            <CardTitle>Getting Started with Expensa</CardTitle>
-            <CardDescription>Follow these steps to process your first expense document</CardDescription>
+            <CardTitle className="text-lg">Get Started</CardTitle>
+            <CardDescription>Process your first expense document</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex gap-4">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm">
+            <div className="space-y-3">
+              <div className="flex gap-3 items-center">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground text-xs">
                   1
                 </div>
                 <div>
-                  <p className="font-medium">Create a Project</p>
-                  <p className="text-sm text-muted-foreground">Organize your expense documents by creating projects</p>
+                  <p className="text-sm font-medium">Create a Project</p>
                 </div>
               </div>
-              <div className="flex gap-4">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm">
+              <div className="flex gap-3 items-center">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground text-xs">
                   2
                 </div>
                 <div>
-                  <p className="font-medium">Upload Documents</p>
-                  <p className="text-sm text-muted-foreground">Upload PDF or image files of your expense documents</p>
+                  <p className="text-sm font-medium">Upload Documents</p>
                 </div>
               </div>
-              <div className="flex gap-4">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm">
+              <div className="flex gap-3 items-center">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground text-xs">
                   3
                 </div>
                 <div>
-                  <p className="font-medium">Review & Export</p>
-                  <p className="text-sm text-muted-foreground">Review extracted data and export to CSV</p>
+                  <p className="text-sm font-medium">Review & Export</p>
                 </div>
               </div>
             </div>

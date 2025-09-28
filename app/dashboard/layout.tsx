@@ -14,8 +14,7 @@ import { AuthGuard } from '@/components/auth/auth-guard'
 const sidebarItems = [
   { href: '/dashboard', icon: Home, label: 'Overview' },
   { href: '/dashboard/projects', icon: FolderOpen, label: 'Projects' },
-  { href: '/dashboard/invoices', icon: FileStack, label: 'All Documents' },
-  { href: '/dashboard/upload', icon: Upload, label: 'Upload Document' },
+  { href: '/dashboard/invoices', icon: FileStack, label: 'Documents' },
   { href: '/dashboard/integrations', icon: Plug, label: 'Integrations' },
   { href: '/dashboard/analytics', icon: BarChart3, label: 'Analytics' },
   { href: '/dashboard/billing', icon: CreditCard, label: 'Billing' },

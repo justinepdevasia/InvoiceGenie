@@ -7,10 +7,10 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Progress } from '@/components/ui/progress'
-import { 
-  CreditCard, 
-  Receipt, 
-  AlertCircle, 
+import {
+  CreditCard,
+  Receipt,
+  AlertCircle,
   CheckCircle,
   Download,
   ExternalLink,
@@ -18,8 +18,6 @@ import {
   Users,
   FileText,
   TrendingUp,
-  Shield,
-  Zap,
   ChevronRight,
   Info,
   Plus
@@ -245,7 +243,7 @@ export default function BillingPage() {
       </Card>
 
       {/* Usage Overview */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-1 max-w-sm">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pages Processed</CardTitle>
@@ -255,50 +253,12 @@ export default function BillingPage() {
             <div className="text-2xl font-bold">
               {billingData?.usage.pagesProcessed} / {billingData?.usage.pagesLimit}
             </div>
-            <Progress 
-              value={(billingData?.usage.pagesProcessed || 0) / (billingData?.usage.pagesLimit || 1) * 100} 
+            <Progress
+              value={(billingData?.usage.pagesProcessed || 0) / (billingData?.usage.pagesLimit || 1) * 100}
               className="mt-2"
             />
             <p className="text-xs text-muted-foreground mt-2">
               {billingData?.usage.pagesLimit ? billingData.usage.pagesLimit - billingData.usage.pagesProcessed : 0} pages remaining
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Storage Used</CardTitle>
-            <Shield className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {billingData?.usage.storageUsed}MB / {billingData?.usage.storageLimit}MB
-            </div>
-            <Progress 
-              value={(billingData?.usage.storageUsed || 0) / (billingData?.usage.storageLimit || 1) * 100} 
-              className="mt-2"
-            />
-            <p className="text-xs text-muted-foreground mt-2">
-              {((billingData?.usage.storageUsed || 0) / (billingData?.usage.storageLimit || 1) * 100).toFixed(0)}% used
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">API Calls</CardTitle>
-            <Zap className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {billingData?.usage.apiCalls} / {billingData?.usage.apiLimit}
-            </div>
-            <Progress 
-              value={(billingData?.usage.apiCalls || 0) / (billingData?.usage.apiLimit || 1) * 100} 
-              className="mt-2"
-            />
-            <p className="text-xs text-muted-foreground mt-2">
-              {billingData?.usage.apiLimit ? billingData.usage.apiLimit - billingData.usage.apiCalls : 0} calls remaining
             </p>
           </CardContent>
         </Card>

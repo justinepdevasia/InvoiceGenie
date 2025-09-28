@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { toast } from 'sonner'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,6 +12,8 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Progress } from '@/components/ui/progress'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   Table,
   TableBody,
@@ -26,7 +30,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { 
+import {
   FileText,
   Download,
   Eye,
@@ -49,9 +53,16 @@ import {
   ChevronRight,
   FileDown,
   Mail,
-  Printer
+  Printer,
+  X,
+  FileCheck,
+  Image,
+  FolderOpen,
+  Home,
+  ChevronRight as ChevronRightIcon
 } from 'lucide-react'
 import { format } from 'date-fns'
+import { useDropzone } from 'react-dropzone'
 
 interface Invoice {
   id: string
@@ -67,7 +78,25 @@ interface Invoice {
   tags: string[]
 }
 
+interface FileWithPreview {
+  file: File
+  preview?: string
+  id: string
+  status: 'pending' | 'uploading' | 'processing' | 'completed' | 'failed'
+  progress: number
+  error?: string
+  name: string
+  size: number
+  type: string
+}
+
+interface Project {
+  id: string
+  name: string
+}
+
 export default function InvoicesPage() {
+  const router = useRouter()
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
@@ -78,11 +107,21 @@ export default function InvoicesPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedInvoices, setSelectedInvoices] = useState<string[]>([])
+  const [activeTab, setActiveTab] = useState('documents')
+
+  // Upload related state
+  const [files, setFiles] = useState<FileWithPreview[]>([])
+  const [projects, setProjects] = useState<Project[]>([])
+  const [selectedProject, setSelectedProject] = useState<string>('')
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadComplete, setUploadComplete] = useState(false)
+
   const itemsPerPage = 10
   const supabase = createClient()
 
   useEffect(() => {
     fetchInvoices()
+    fetchProjects()
   }, [])
 
   useEffect(() => {
@@ -144,6 +183,24 @@ export default function InvoicesPage() {
     return 'pending'
   }
 
+  const fetchProjects = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, name')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      setProjects(data || [])
+    } catch (error) {
+      console.error('Error fetching projects:', error)
+    }
+  }
+
   const filterAndSortInvoices = () => {
     let filtered = [...invoices]
 
@@ -199,6 +256,215 @@ export default function InvoicesPage() {
     })
 
     setFilteredInvoices(filtered)
+  }
+
+  // Upload functionality
+  const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
+    const newFiles: FileWithPreview[] = acceptedFiles.map(file => ({
+      file: file,
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      preview: URL.createObjectURL(file),
+      id: Math.random().toString(36).substr(2, 9),
+      status: 'pending' as const,
+      progress: 0
+    }))
+
+    setFiles(prev => [...prev, ...newFiles])
+
+    if (rejectedFiles.length > 0) {
+      toast.error(`${rejectedFiles.length} file(s) rejected. Please ensure files are PDFs or images under 10MB.`)
+    } else if (newFiles.length > 0) {
+      toast.success(`${newFiles.length} file(s) added successfully!`)
+    }
+  }, [])
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'application/pdf': ['.pdf'],
+      'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.webp']
+    },
+    maxSize: 10 * 1024 * 1024, // 10MB
+    multiple: true
+  })
+
+  const removeFile = (fileId: string) => {
+    setFiles(files => files.filter(f => f.id !== fileId))
+  }
+
+  const uploadFiles = async () => {
+    if (!selectedProject) {
+      toast.error('Please select a project first')
+      return
+    }
+
+    if (files.length === 0) {
+      toast.error('Please add files to upload')
+      return
+    }
+
+    setIsUploading(true)
+    setUploadComplete(false)
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      for (const fileWrapper of files) {
+        try {
+          setFiles(prev => prev.map(f =>
+            f.id === fileWrapper.id
+              ? { ...f, status: 'uploading', progress: 30 }
+              : f
+          ))
+
+          const fileName = `${user.id}/${selectedProject}/${Date.now()}-${fileWrapper.name}`
+
+          let filePath = fileName
+          try {
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from('documents')
+              .upload(fileName, fileWrapper.file, {
+                contentType: fileWrapper.type || 'application/pdf',
+                cacheControl: '3600',
+                upsert: false
+              })
+
+            if (uploadError) {
+              console.error('Storage upload failed:', uploadError)
+              throw new Error(`Storage upload failed: ${uploadError.message}`)
+            }
+
+            filePath = uploadData.path
+            console.log('File uploaded successfully to:', filePath)
+          } catch (storageErr) {
+            console.error('Storage upload error:', storageErr)
+            throw new Error(`Failed to upload file: ${storageErr instanceof Error ? storageErr.message : 'Unknown error'}`)
+          }
+
+          setFiles(prev => prev.map(f =>
+            f.id === fileWrapper.id
+              ? { ...f, status: 'uploading', progress: 60 }
+              : f
+          ))
+
+          // Create invoice record
+          const { data: invoiceData, error: invoiceError } = await supabase
+            .from('invoices')
+            .insert([{
+              project_id: selectedProject,
+              user_id: user.id,
+              file_path: filePath,
+              original_file_name: fileWrapper.name,
+              file_type: fileWrapper.type || 'application/octet-stream',
+              file_size: fileWrapper.size,
+              processing_status: 'pending'
+            }])
+            .select()
+            .single()
+
+          if (invoiceError) throw invoiceError
+
+          setFiles(prev => prev.map(f =>
+            f.id === fileWrapper.id
+              ? { ...f, status: 'processing', progress: 80 }
+              : f
+          ))
+
+          // Convert file to base64 and send to OCR
+          const base64Data = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onload = () => {
+              const result = reader.result as string
+              const base64 = result.split(',')[1]
+              resolve(base64)
+            }
+            reader.onerror = () => reject(reader.error)
+            reader.readAsDataURL(fileWrapper.file)
+          })
+
+          const ocrResponse = await fetch('/api/ocr/process', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              invoiceId: invoiceData.id,
+              base64Data: base64Data,
+              fileType: fileWrapper.type || 'application/octet-stream',
+              fileName: fileWrapper.name
+            })
+          })
+
+          const responseText = await ocrResponse.text()
+
+          if (ocrResponse.ok) {
+            setFiles(prev => prev.map(f =>
+              f.id === fileWrapper.id
+                ? { ...f, status: 'completed', progress: 100 }
+                : f
+            ))
+          } else {
+            let errorMessage = 'OCR processing failed'
+            try {
+              const errorData = JSON.parse(responseText)
+              errorMessage = errorData.error || errorData.details || errorMessage
+            } catch (e) {
+              errorMessage = responseText || errorMessage
+            }
+
+            setFiles(prev => prev.map(f =>
+              f.id === fileWrapper.id
+                ? { ...f, status: 'failed', error: errorMessage }
+                : f
+            ))
+            continue
+          }
+
+        } catch (error) {
+          console.error(`Error uploading ${fileWrapper.name}:`, error)
+          setFiles(prev => prev.map(f =>
+            f.id === fileWrapper.id
+              ? { ...f, status: 'failed', error: 'Upload failed' }
+              : f
+          ))
+        }
+      }
+
+      setUploadComplete(true)
+      toast.success(`${files.length} document(s) uploaded and processing started!`)
+
+      // Refresh the documents list
+      fetchInvoices()
+    } catch (error) {
+      console.error('Error during upload:', error)
+      toast.error('Upload failed. Please try again.')
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const getFileIcon = (file: FileWithPreview) => {
+    if (file.type && file.type.startsWith('image/')) {
+      return <Image className="h-8 w-8" />
+    }
+    return <FileText className="h-8 w-8" />
+  }
+
+  const getUploadStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="h-5 w-5 text-green-600" />
+      case 'failed':
+        return <AlertCircle className="h-5 w-5 text-red-600" />
+      case 'uploading':
+      case 'processing':
+        return <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary" />
+      default:
+        return <FileCheck className="h-5 w-5 text-gray-400" />
+    }
   }
 
   const handleBulkAction = (action: string) => {
@@ -307,13 +573,15 @@ export default function InvoicesPage() {
           <h1 className="text-3xl font-bold">Documents</h1>
           <p className="text-muted-foreground">Manage and track all your processed expense documents</p>
         </div>
-        <Link href="/dashboard/upload">
-          <Button className="bg-gradient-to-r from-rose-500 to-pink-600">
-            <Upload className="h-4 w-4 mr-2" />
-            Upload Document
-          </Button>
-        </Link>
       </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="documents">View Documents</TabsTrigger>
+          <TabsTrigger value="upload">Upload Documents</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="documents" className="space-y-6">
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-4">
@@ -569,6 +837,220 @@ export default function InvoicesPage() {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="upload" className="space-y-6">
+          {/* Project Selection */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Select Project</CardTitle>
+              <CardDescription>
+                Choose which project these expense documents belong to
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4">
+                <Select value={selectedProject} onValueChange={setSelectedProject}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={selectedProject ? projects.find(p => p.id === selectedProject)?.name || 'Select a project' : 'Select a project'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {projects.map(project => (
+                      <SelectItem key={project.id} value={project.id}>
+                        <div className="flex items-center gap-2">
+                          <FolderOpen className="h-4 w-4" />
+                          {project.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  onClick={() => router.push('/dashboard/projects')}
+                >
+                  Manage Projects
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Upload Area */}
+          <Card>
+            <CardContent className="p-0">
+              <div
+                {...getRootProps()}
+                className={`
+                  border-2 border-dashed rounded-lg p-12 text-center cursor-pointer
+                  transition-all duration-300 transform
+                  ${isDragActive
+                    ? 'border-primary bg-primary/10 scale-105 shadow-lg'
+                    : 'border-gray-300 hover:border-primary hover:bg-primary/5 hover:scale-102'
+                  }
+                `}
+              >
+                <input {...getInputProps()} />
+                <div className={`transition-all duration-300 ${isDragActive ? 'scale-110' : ''}`}>
+                  <Upload className={`h-16 w-16 mx-auto mb-6 transition-colors duration-300 ${
+                    isDragActive ? 'text-primary' : 'text-gray-400'
+                  }`} />
+                </div>
+                {isDragActive ? (
+                  <div className="space-y-2">
+                    <p className="text-xl font-bold text-primary">Drop files here!</p>
+                    <p className="text-primary/80">Release to upload your documents</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-xl font-bold mb-2 text-gray-900">
+                        Drag & drop your documents
+                      </p>
+                      <p className="text-gray-600 text-lg">
+                        or click to browse files
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap justify-center gap-2 text-sm text-gray-500">
+                      <span className="bg-gray-100 px-3 py-1 rounded-full">PDF</span>
+                      <span className="bg-gray-100 px-3 py-1 rounded-full">PNG</span>
+                      <span className="bg-gray-100 px-3 py-1 rounded-full">JPG</span>
+                      <span className="bg-gray-100 px-3 py-1 rounded-full">JPEG</span>
+                      <span className="bg-gray-100 px-3 py-1 rounded-full">GIF</span>
+                      <span className="bg-gray-100 px-3 py-1 rounded-full">WebP</span>
+                    </div>
+                    <p className="text-sm text-gray-500">
+                      Maximum file size: 10MB per file
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* File List */}
+          {files.length > 0 && (
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Files ({files.length})</CardTitle>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setFiles([])}
+                      disabled={isUploading}
+                    >
+                      Clear All
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={uploadFiles}
+                      disabled={isUploading || !selectedProject}
+                      className="bg-gradient-to-r from-rose-500 to-pink-600"
+                    >
+                      {isUploading ? 'Uploading...' : 'Upload All'}
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {files.map(file => (
+                    <div
+                      key={file.id}
+                      className="flex items-center justify-between p-3 border rounded-lg"
+                    >
+                      <div className="flex items-center gap-3 flex-1">
+                        {getFileIcon(file)}
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{file.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {file.size ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : 'Processing...'}
+                          </p>
+                          {file.status === 'uploading' || file.status === 'processing' ? (
+                            <div className="mt-2 space-y-1">
+                              <div className="flex justify-between text-xs">
+                                <span className="text-primary font-medium">
+                                  {file.status === 'uploading' ? 'Uploading...' : 'Processing...'}
+                                </span>
+                                <span className="text-muted-foreground">{file.progress}%</span>
+                              </div>
+                              <Progress
+                                value={file.progress}
+                                className="h-2"
+                              />
+                            </div>
+                          ) : file.error ? (
+                            <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-md">
+                              <p className="text-xs text-red-700 font-medium">Upload Failed</p>
+                              <p className="text-xs text-red-600 mt-1">{file.error}</p>
+                            </div>
+                          ) : file.status === 'completed' ? (
+                            <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
+                              <p className="text-xs text-green-700 font-medium">Successfully processed!</p>
+                            </div>
+                          ) : null}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {getUploadStatusIcon(file.status)}
+                          {file.status === 'pending' && !isUploading && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeFile(file.id)}
+                              className="hover:bg-red-50 hover:text-red-600"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Upload Success */}
+          {uploadComplete && (
+            <Card className="border-green-200 bg-green-50">
+              <CardContent className="pt-6">
+                <div className="flex flex-col items-center text-center space-y-4">
+                  <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center">
+                    <CheckCircle className="h-8 w-8 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-green-900">Upload Successful!</h3>
+                    <p className="text-green-700 mt-1">
+                      {files.length} document{files.length > 1 ? 's' : ''} uploaded and being processed
+                    </p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                    <Button
+                      onClick={() => setActiveTab('documents')}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <FileText className="mr-2 h-4 w-4" />
+                      View Documents
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setFiles([])
+                        setUploadComplete(false)
+                      }}
+                      className="border-green-200 text-green-700 hover:bg-green-50"
+                    >
+                      Upload More
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

@@ -474,228 +474,141 @@ export default function AnalysisPage() {
     }))
   }
 
-  const exportToPDF = async () => {
+  const exportToCSV = async () => {
     try {
-      const { PDFDocument, rgb, StandardFonts } = await import('pdf-lib')
-      const html2canvas = (await import('html2canvas')).default
+      // Prepare CSV data
+      const csvData = []
 
-      // Create new PDF document
-      const pdfDoc = await PDFDocument.create()
-      const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
-      const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+      // Add header row
+      csvData.push([
+        'Invoice Date',
+        'Invoice Number',
+        'Vendor Name',
+        'Project Name',
+        'Total Amount',
+        'Subtotal',
+        'Tax Amount',
+        'Currency',
+        'Payment Method',
+        'Category'
+      ])
 
-      // Helper function to add a new page
-      const addPage = () => {
-        return pdfDoc.addPage([595.276, 841.890]) // A4 size
-      }
+      // Add invoice data rows
+      filteredData.forEach(invoice => {
+        // Auto-categorize for export
+        let category = 'Other'
+        const vendor = invoice.vendor_name?.toLowerCase() || ''
+        const description = invoice.raw_ocr_data?.line_items?.[0]?.description?.toLowerCase() || ''
 
-      let page = addPage()
-      let yPosition = 800
-
-      // Title
-      page.drawText('Expense Analysis Report', {
-        x: 50,
-        y: yPosition,
-        size: 24,
-        font: boldFont,
-        color: rgb(0.2, 0.2, 0.2),
-      })
-
-      yPosition -= 30
-      page.drawText(`Generated on ${format(new Date(), 'PPP')}`, {
-        x: 50,
-        y: yPosition,
-        size: 12,
-        font: font,
-        color: rgb(0.5, 0.5, 0.5),
-      })
-
-      // Summary Statistics
-      yPosition -= 50
-      page.drawText('Summary Statistics', {
-        x: 50,
-        y: yPosition,
-        size: 18,
-        font: boldFont,
-        color: rgb(0.2, 0.2, 0.2),
-      })
-
-      yPosition -= 30
-      const summaryData = [
-        [`Total Spending: $${summaryStats.totalSpending.toFixed(2)}`],
-        [`Total Transactions: ${summaryStats.transactionCount}`],
-        [`Average Transaction: $${summaryStats.averageTransaction.toFixed(2)}`],
-        [`Tax Paid: $${summaryStats.taxPaid.toFixed(2)}`],
-        [`Monthly Growth: ${summaryStats.monthlyGrowth.toFixed(1)}%`],
-        [`Top Vendor: ${summaryStats.topVendor}`],
-        [`Top Payment Method: ${summaryStats.topPaymentMethod}`]
-      ]
-
-      summaryData.forEach(([text]) => {
-        page.drawText(text, {
-          x: 50,
-          y: yPosition,
-          size: 12,
-          font: font,
-          color: rgb(0.3, 0.3, 0.3),
-        })
-        yPosition -= 20
-      })
-
-      // Vendor Analysis Table
-      yPosition -= 30
-      page.drawText('Top Vendors Analysis', {
-        x: 50,
-        y: yPosition,
-        size: 16,
-        font: boldFont,
-        color: rgb(0.2, 0.2, 0.2),
-      })
-
-      yPosition -= 25
-      // Table headers
-      page.drawText('Vendor', { x: 50, y: yPosition, size: 10, font: boldFont })
-      page.drawText('Total Spent', { x: 200, y: yPosition, size: 10, font: boldFont })
-      page.drawText('Transactions', { x: 300, y: yPosition, size: 10, font: boldFont })
-      page.drawText('Avg/Transaction', { x: 400, y: yPosition, size: 10, font: boldFont })
-      page.drawText('% of Total', { x: 500, y: yPosition, size: 10, font: boldFont })
-
-      yPosition -= 15
-      vendorAnalysis.slice(0, 10).forEach((vendor) => {
-        if (yPosition < 100) {
-          page = addPage()
-          yPosition = 750
+        if (vendor.includes('aws') || vendor.includes('google') || vendor.includes('microsoft') || vendor.includes('supabase')) {
+          category = 'Technology & Software'
+        } else if (vendor.includes('home depot') || vendor.includes('lowes') || description.includes('concrete')) {
+          category = 'Hardware & Materials'
+        } else if (vendor.includes('office') || description.includes('office')) {
+          category = 'Office Supplies'
+        } else if (vendor.includes('travel') || vendor.includes('hotel') || vendor.includes('airline')) {
+          category = 'Travel & Transportation'
+        } else if (vendor.includes('restaurant') || vendor.includes('food')) {
+          category = 'Meals & Entertainment'
+        } else if (description.includes('subscription') || description.includes('plan')) {
+          category = 'Subscriptions & Services'
         }
 
-        page.drawText(vendor.vendor.substring(0, 20), { x: 50, y: yPosition, size: 9, font: font })
-        page.drawText(`$${vendor.total.toFixed(2)}`, { x: 200, y: yPosition, size: 9, font: font })
-        page.drawText(vendor.count.toString(), { x: 300, y: yPosition, size: 9, font: font })
-        page.drawText(`$${vendor.average.toFixed(2)}`, { x: 400, y: yPosition, size: 9, font: font })
-        page.drawText(`${vendor.percentage.toFixed(1)}%`, { x: 500, y: yPosition, size: 9, font: font })
-        yPosition -= 15
+        csvData.push([
+          invoice.invoice_date || '',
+          invoice.invoice_number || '',
+          invoice.vendor_name || '',
+          invoice.project_name || '',
+          invoice.total_amount.toFixed(2),
+          invoice.subtotal.toFixed(2),
+          invoice.tax_amount.toFixed(2),
+          invoice.currency || 'USD',
+          invoice.payment_method || '',
+          category
+        ])
       })
 
-      // Categories Analysis
-      if (yPosition < 200) {
-        page = addPage()
-        yPosition = 750
-      }
+      // Add summary statistics as separate section
+      csvData.push([]) // Empty row
+      csvData.push(['SUMMARY STATISTICS'])
+      csvData.push(['Metric', 'Value'])
+      csvData.push(['Total Spending', `$${summaryStats.totalSpending.toFixed(2)}`])
+      csvData.push(['Total Transactions', summaryStats.transactionCount.toString()])
+      csvData.push(['Average Transaction', `$${summaryStats.averageTransaction.toFixed(2)}`])
+      csvData.push(['Tax Paid', `$${summaryStats.taxPaid.toFixed(2)}`])
+      csvData.push(['Monthly Growth', `${summaryStats.monthlyGrowth.toFixed(1)}%`])
+      csvData.push(['Top Vendor', summaryStats.topVendor])
+      csvData.push(['Top Payment Method', summaryStats.topPaymentMethod])
 
-      yPosition -= 30
-      page.drawText('Category Analysis', {
-        x: 50,
-        y: yPosition,
-        size: 16,
-        font: boldFont,
-        color: rgb(0.2, 0.2, 0.2),
+      // Add vendor analysis
+      csvData.push([]) // Empty row
+      csvData.push(['VENDOR ANALYSIS'])
+      csvData.push(['Vendor', 'Total Spent', 'Transaction Count', 'Average per Transaction', 'Percentage of Total'])
+      vendorAnalysis.forEach(vendor => {
+        csvData.push([
+          vendor.vendor,
+          vendor.total.toFixed(2),
+          vendor.count.toString(),
+          vendor.average.toFixed(2),
+          `${vendor.percentage.toFixed(1)}%`
+        ])
       })
 
-      yPosition -= 25
-      categoryAnalysis.forEach((category) => {
-        if (yPosition < 100) {
-          page = addPage()
-          yPosition = 750
-        }
-
-        page.drawText(`${category.category}: $${category.total.toFixed(2)} (${category.percentage.toFixed(1)}%)`, {
-          x: 50,
-          y: yPosition,
-          size: 10,
-          font: font,
-          color: rgb(0.3, 0.3, 0.3),
-        })
-        yPosition -= 15
+      // Add category analysis
+      csvData.push([]) // Empty row
+      csvData.push(['CATEGORY ANALYSIS'])
+      csvData.push(['Category', 'Total Spent', 'Transaction Count', 'Percentage of Total'])
+      categoryAnalysis.forEach(category => {
+        csvData.push([
+          category.category,
+          category.total.toFixed(2),
+          category.count.toString(),
+          `${category.percentage.toFixed(1)}%`
+        ])
       })
 
-      // Forecasting data
+      // Add forecasting data if available
       if (forecastData.length > 0) {
-        if (yPosition < 200) {
-          page = addPage()
-          yPosition = 750
-        }
-
-        yPosition -= 30
-        page.drawText('Spending Forecast', {
-          x: 50,
-          y: yPosition,
-          size: 16,
-          font: boldFont,
-          color: rgb(0.2, 0.2, 0.2),
+        csvData.push([]) // Empty row
+        csvData.push(['SPENDING FORECAST'])
+        csvData.push(['Month', 'Predicted Amount', 'Lower Bound', 'Upper Bound', 'Confidence'])
+        forecastData.forEach(forecast => {
+          csvData.push([
+            forecast.month,
+            forecast.predicted.toFixed(2),
+            forecast.lower.toFixed(2),
+            forecast.upper.toFixed(2),
+            `${(forecast.confidence * 100).toFixed(0)}%`
+          ])
         })
+      }
 
-        yPosition -= 25
-        forecastData.forEach((forecast, index) => {
-          if (yPosition < 100) {
-            page = addPage()
-            yPosition = 750
+      // Convert to CSV string
+      const csvContent = csvData.map(row =>
+        row.map(field => {
+          // Escape fields that contain commas or quotes
+          if (typeof field === 'string' && (field.includes(',') || field.includes('"') || field.includes('\n'))) {
+            return `"${field.replace(/"/g, '""')}"`
           }
+          return field
+        }).join(',')
+      ).join('\n')
 
-          page.drawText(
-            `${forecast.month}: $${forecast.predicted.toFixed(2)} (${(forecast.confidence * 100).toFixed(0)}% confidence)`,
-            {
-              x: 50,
-              y: yPosition,
-              size: 10,
-              font: font,
-              color: rgb(0.3, 0.3, 0.3),
-            }
-          )
-          yPosition -= 15
-        })
-      }
-
-      // Capture charts if possible
-      try {
-        // Try to capture the trends chart
-        const trendsChart = document.querySelector('[data-testid="trends-chart"]') ||
-                           document.querySelector('.recharts-wrapper')
-
-        if (trendsChart) {
-          const canvas = await html2canvas(trendsChart as HTMLElement, {
-            backgroundColor: '#ffffff',
-            scale: 1
-          })
-
-          const chartImage = canvas.toDataURL('image/png')
-          const chartImageEmbed = await pdfDoc.embedPng(chartImage)
-
-          page = addPage()
-          page.drawText('Spending Trends Chart', {
-            x: 50,
-            y: 750,
-            size: 16,
-            font: boldFont,
-            color: rgb(0.2, 0.2, 0.2),
-          })
-
-          const { width, height } = chartImageEmbed.scale(0.8)
-          page.drawImage(chartImageEmbed, {
-            x: 50,
-            y: 400,
-            width: Math.min(width, 500),
-            height: Math.min(height, 300),
-          })
-        }
-      } catch (error) {
-        console.warn('Could not capture charts:', error)
-      }
-
-      // Generate and download PDF
-      const pdfBytes = await pdfDoc.save()
-      const blob = new Blob([new Uint8Array(pdfBytes)], { type: 'application/pdf' })
+      // Create and download CSV file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
       const url = URL.createObjectURL(blob)
 
       const link = document.createElement('a')
       link.href = url
-      link.download = `expense-analysis-${format(new Date(), 'yyyy-MM-dd')}.pdf`
+      link.download = `expense-analysis-${format(new Date(), 'yyyy-MM-dd')}.csv`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
       URL.revokeObjectURL(url)
 
     } catch (error) {
-      console.error('Error generating PDF:', error)
-      alert('Failed to generate PDF. Please try again.')
+      console.error('Error generating CSV:', error)
+      alert('Failed to generate CSV. Please try again.')
     }
   }
 
@@ -762,9 +675,9 @@ export default function AnalysisPage() {
           </h1>
           <p className="text-muted-foreground">Comprehensive insights into your spending patterns</p>
         </div>
-        <Button onClick={exportToPDF} className="bg-gradient-to-r from-rose-500 to-pink-600">
+        <Button onClick={exportToCSV} className="bg-gradient-to-r from-rose-500 to-pink-600">
           <Download className="h-4 w-4 mr-2" />
-          Export PDF
+          Export CSV
         </Button>
       </div>
 

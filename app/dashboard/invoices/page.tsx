@@ -933,157 +933,144 @@ export default function InvoicesPage() {
             </CardContent>
           </Card>
 
-          {/* Main Upload Layout - Side by Side */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-fit">
-            {/* Left Side - Upload Area */}
-            <div className="space-y-4">
+          {/* Compact Single Row Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-fit">
+            {/* Left - Compact Upload Area */}
+            <div className="lg:col-span-1">
               <Card className="h-fit">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-2">
-                    <Upload className="h-5 w-5" />
-                    Upload Documents
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Upload className="h-4 w-4" />
+                    Upload
                   </CardTitle>
-                  <CardDescription>
-                    Drag & drop files or click to browse
-                  </CardDescription>
                 </CardHeader>
-                <CardContent className="p-0">
+                <CardContent className="p-4">
                   <div
                     {...getRootProps()}
                     className={`
-                      border-2 border-dashed rounded-lg m-6 p-8 text-center cursor-pointer
+                      border-2 border-dashed rounded-lg p-6 text-center cursor-pointer
                       transition-all duration-300 transform
                       ${isDragActive
                         ? 'border-primary bg-primary/10 scale-105 shadow-lg'
-                        : 'border-gray-300 hover:border-primary hover:bg-primary/5 hover:scale-102'
+                        : 'border-gray-300 hover:border-primary hover:bg-primary/5'
                       }
                     `}
                   >
                     <input {...getInputProps()} />
                     <div className={`transition-all duration-300 ${isDragActive ? 'scale-110' : ''}`}>
-                      <Upload className={`h-12 w-12 mx-auto mb-4 transition-colors duration-300 ${
+                      <Upload className={`h-8 w-8 mx-auto mb-3 transition-colors duration-300 ${
                         isDragActive ? 'text-primary' : 'text-gray-400'
                       }`} />
                     </div>
                     {isDragActive ? (
-                      <div className="space-y-2">
-                        <p className="text-lg font-bold text-primary">Drop files here!</p>
-                        <p className="text-primary/80">Release to upload</p>
+                      <div className="space-y-1">
+                        <p className="font-bold text-primary">Drop files!</p>
+                        <p className="text-xs text-primary/80">Release to upload</p>
                       </div>
                     ) : (
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         <div>
-                          <p className="text-lg font-bold mb-1 text-gray-900">
+                          <p className="font-bold text-gray-900">
                             Drop files here
                           </p>
-                          <p className="text-gray-600">
+                          <p className="text-sm text-gray-600">
                             or click to browse
                           </p>
                         </div>
                         <div className="flex flex-wrap justify-center gap-1 text-xs text-gray-500">
-                          <span className="bg-gray-100 px-2 py-1 rounded">PDF</span>
-                          <span className="bg-gray-100 px-2 py-1 rounded">PNG</span>
-                          <span className="bg-gray-100 px-2 py-1 rounded">JPG</span>
-                          <span className="bg-gray-100 px-2 py-1 rounded">JPEG</span>
-                          <span className="bg-gray-100 px-2 py-1 rounded">GIF</span>
-                          <span className="bg-gray-100 px-2 py-1 rounded">WebP</span>
+                          <span className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">PDF</span>
+                          <span className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">PNG</span>
+                          <span className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">JPG</span>
                         </div>
                         <p className="text-xs text-gray-500">
-                          Max: 10MB per file
+                          Max: 10MB
                         </p>
                       </div>
                     )}
                   </div>
-                </CardContent>
-              </Card>
 
-              {/* Upload Actions */}
-              {files.length > 0 && (
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-center">
-                      <div className="text-sm text-muted-foreground">
-                        {files.length} file{files.length > 1 ? 's' : ''} ready
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setFiles([])}
-                          disabled={isUploading}
-                        >
-                          Clear All
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={uploadFiles}
-                          disabled={isUploading || !selectedProject || files.length === 0}
-                          className="bg-gradient-to-r from-rose-500 to-pink-600"
-                        >
-                          {isUploading ? 'Uploading...' : 'Upload All'}
-                        </Button>
+                  {/* Inline Upload Actions */}
+                  {files.length > 0 && (
+                    <div className="mt-4 pt-4 border-t">
+                      <div className="flex justify-between items-center mb-3">
+                        <div className="text-sm text-muted-foreground">
+                          {files.length} file{files.length > 1 ? 's' : ''}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setFiles([])}
+                            disabled={isUploading}
+                          >
+                            Clear
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={uploadFiles}
+                            disabled={isUploading || !selectedProject || files.length === 0}
+                            className="bg-gradient-to-r from-rose-500 to-pink-600"
+                          >
+                            {isUploading ? 'Uploading...' : 'Upload All'}
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              )}
+                  )}
+                </CardContent>
+              </Card>
             </div>
 
-            {/* Right Side - File List */}
-            <div className="space-y-4">
+            {/* Right - Compact File List */}
+            <div className="lg:col-span-2">
               <Card className="h-fit">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    Selected Files ({files.length})
-                  </CardTitle>
-                  <CardDescription>
-                    {files.length === 0
-                      ? "Files will appear here after selection"
-                      : `${files.filter(f => f.status === 'completed').length} completed, ${files.filter(f => f.status === 'failed').length} failed`
-                    }
-                  </CardDescription>
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Selected Files ({files.length})
+                    </CardTitle>
+                    {files.length > 0 && (
+                      <CardDescription className="text-sm">
+                        {files.filter(f => f.status === 'completed').length} completed, {files.filter(f => f.status === 'failed').length} failed
+                      </CardDescription>
+                    )}
+                  </div>
                 </CardHeader>
-                {files.length > 0 && (
-                  <CardContent className="max-h-96 overflow-y-auto">
-                    <div className="space-y-3">
+                {files.length > 0 ? (
+                  <CardContent className="max-h-64 overflow-y-auto">
+                    <div className="space-y-2">
                       {files.map(file => (
                         <div
                           key={file.id}
-                          className="flex items-start gap-3 p-3 border rounded-lg hover:shadow-sm transition-shadow"
+                          className="flex items-center gap-3 p-2 border rounded hover:shadow-sm transition-shadow"
                         >
-                          <div className="flex-shrink-0 mt-1">
+                          <div className="flex-shrink-0">
                             {getFileIcon(file)}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-sm truncate" title={file.name}>
                               {file.name}
                             </p>
-                            <p className="text-xs text-muted-foreground">
-                              {file.size ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : 'Processing...'}
-                            </p>
-                            {file.status === 'uploading' || file.status === 'processing' ? (
-                              <div className="mt-2 space-y-1">
-                                <div className="flex justify-between text-xs">
-                                  <span className="text-primary font-medium">
-                                    {file.status === 'uploading' ? 'Uploading...' : 'Processing...'}
+                            <div className="flex items-center gap-2">
+                              <p className="text-xs text-muted-foreground">
+                                {file.size ? `${(file.size / 1024 / 1024).toFixed(1)} MB` : 'Processing...'}
+                              </p>
+                              {file.status === 'uploading' || file.status === 'processing' ? (
+                                <div className="flex items-center gap-1">
+                                  <span className="text-xs text-primary font-medium">
+                                    {file.status === 'uploading' ? 'Uploading' : 'Processing'}
                                   </span>
-                                  <span className="text-muted-foreground">{file.progress}%</span>
+                                  <span className="text-xs text-muted-foreground">{file.progress}%</span>
                                 </div>
-                                <Progress
-                                  value={file.progress}
-                                  className="h-1.5"
-                                />
-                              </div>
-                            ) : file.error ? (
-                              <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-md">
-                                <p className="text-xs text-red-700 font-medium">Upload Failed</p>
-                                <p className="text-xs text-red-600 mt-1 break-words">{file.error}</p>
-                              </div>
-                            ) : file.status === 'completed' ? (
-                              <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
-                                <p className="text-xs text-green-700 font-medium">Successfully processed!</p>
-                              </div>
+                              ) : file.error ? (
+                                <span className="text-xs text-red-600 font-medium">Failed</span>
+                              ) : file.status === 'completed' ? (
+                                <span className="text-xs text-green-600 font-medium">Completed</span>
+                              ) : null}
+                            </div>
+                            {file.status === 'uploading' || file.status === 'processing' ? (
+                              <Progress value={file.progress} className="h-1 mt-1" />
                             ) : null}
                           </div>
                           <div className="flex-shrink-0 flex items-center gap-2">
@@ -1093,9 +1080,9 @@ export default function InvoicesPage() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => removeFile(file.id)}
-                                className="hover:bg-red-50 hover:text-red-600 h-8 w-8 p-0"
+                                className="hover:bg-red-50 hover:text-red-600 h-6 w-6 p-0"
                               >
-                                <X className="h-4 w-4" />
+                                <X className="h-3 w-3" />
                               </Button>
                             )}
                           </div>
@@ -1103,13 +1090,11 @@ export default function InvoicesPage() {
                       ))}
                     </div>
                   </CardContent>
-                )}
-                {files.length === 0 && (
+                ) : (
                   <CardContent>
-                    <div className="text-center py-8 text-muted-foreground">
-                      <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <div className="text-center py-6 text-muted-foreground">
+                      <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
                       <p className="text-sm">No files selected</p>
-                      <p className="text-xs mt-1">Add files using the upload area</p>
                     </div>
                   </CardContent>
                 )}
@@ -1117,25 +1102,27 @@ export default function InvoicesPage() {
             </div>
           </div>
 
-          {/* Upload Success */}
+          {/* Compact Upload Success */}
           {uploadComplete && (
-            <div className="max-w-2xl mx-auto">
             <Card className="border-green-200 bg-green-50">
-              <CardContent className="pt-6">
-                <div className="flex flex-col items-center text-center space-y-4">
-                  <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center">
-                    <CheckCircle className="h-8 w-8 text-green-600" />
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center">
+                      <CheckCircle className="h-6 w-6 text-green-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-green-900">Upload Successful!</h3>
+                      <p className="text-sm text-green-700">
+                        {files.length} document{files.length > 1 ? 's' : ''} uploaded and processed
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-green-900">Upload Successful!</h3>
-                    <p className="text-green-700 mt-1">
-                      {files.length} document{files.length > 1 ? 's' : ''} uploaded and being processed
-                    </p>
-                  </div>
-                  <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                  <div className="flex gap-2">
                     <Button
                       onClick={() => setActiveTab('documents')}
                       className="bg-green-600 hover:bg-green-700"
+                      size="sm"
                     >
                       <FileText className="mr-2 h-4 w-4" />
                       View Documents
@@ -1147,6 +1134,7 @@ export default function InvoicesPage() {
                         setUploadComplete(false)
                       }}
                       className="border-green-200 text-green-700 hover:bg-green-50"
+                      size="sm"
                     >
                       Upload More
                     </Button>
@@ -1154,7 +1142,6 @@ export default function InvoicesPage() {
                 </div>
               </CardContent>
             </Card>
-            </div>
           )}
         </TabsContent>
       </Tabs>

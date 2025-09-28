@@ -198,7 +198,7 @@ export default function PricingPage() {
               <Sparkles className="h-4 w-4 text-yellow-500 absolute -top-1 -right-1" />
             </div>
             <span className="font-bold text-2xl bg-gradient-to-r from-rose-500 to-pink-600 bg-clip-text text-transparent">
-              Invoice Genie
+              Expensa
             </span>
           </Link>
           <div className="flex items-center space-x-4">

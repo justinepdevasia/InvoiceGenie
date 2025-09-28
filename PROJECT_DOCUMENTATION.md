@@ -249,7 +249,7 @@ STRIPE_WEBHOOK_SECRET=[to be configured]
 MISTRAL_API_KEY=[REQUIRED - Get from https://console.mistral.ai/]
 
 # App
-NEXT_PUBLIC_APP_URL=http://localhost:3002 (dev)
+NEXT_PUBLIC_APP_URL=https://expensa.dev (production)
 ```
 
 ---
@@ -314,7 +314,7 @@ InvoiceGenie/
    ```bash
    npm run dev
    ```
-   Access at: http://localhost:3002
+   Access at: https://expensa.dev
 
 ---
 

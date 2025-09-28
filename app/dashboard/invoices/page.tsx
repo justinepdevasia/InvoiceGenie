@@ -899,6 +899,7 @@ export default function InvoicesPage() {
 
         <TabsContent value="upload" className="space-y-6">
           {/* Project Selection */}
+          <div className="max-w-2xl mx-auto">
           <Card>
             <CardHeader>
               <CardTitle>Select Project</CardTitle>
@@ -932,21 +933,23 @@ export default function InvoicesPage() {
               </div>
             </CardContent>
           </Card>
+          </div>
 
           {/* Upload Area */}
-          <Card>
-            <CardContent className="p-0">
-              <div
-                {...getRootProps()}
-                className={`
-                  border-2 border-dashed rounded-lg p-12 text-center cursor-pointer
-                  transition-all duration-300 transform
-                  ${isDragActive
-                    ? 'border-primary bg-primary/10 scale-105 shadow-lg'
-                    : 'border-gray-300 hover:border-primary hover:bg-primary/5 hover:scale-102'
-                  }
-                `}
-              >
+          <div className="max-w-2xl mx-auto">
+            <Card>
+              <CardContent className="p-0">
+                <div
+                  {...getRootProps()}
+                  className={`
+                    border-2 border-dashed rounded-lg p-12 text-center cursor-pointer
+                    transition-all duration-300 transform
+                    ${isDragActive
+                      ? 'border-primary bg-primary/10 scale-105 shadow-lg'
+                      : 'border-gray-300 hover:border-primary hover:bg-primary/5 hover:scale-102'
+                    }
+                  `}
+                >
                 <input {...getInputProps()} />
                 <div className={`transition-all duration-300 ${isDragActive ? 'scale-110' : ''}`}>
                   <Upload className={`h-16 w-16 mx-auto mb-6 transition-colors duration-300 ${
@@ -984,6 +987,7 @@ export default function InvoicesPage() {
               </div>
             </CardContent>
           </Card>
+          </div>
 
           {/* File List */}
           {files.length > 0 && (
@@ -1072,6 +1076,7 @@ export default function InvoicesPage() {
 
           {/* Upload Success */}
           {uploadComplete && (
+            <div className="max-w-2xl mx-auto">
             <Card className="border-green-200 bg-green-50">
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center space-y-4">
@@ -1106,6 +1111,7 @@ export default function InvoicesPage() {
                 </div>
               </CardContent>
             </Card>
+            </div>
           )}
         </TabsContent>
       </Tabs>

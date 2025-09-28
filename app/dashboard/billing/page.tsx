@@ -211,58 +211,39 @@ export default function BillingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Billing & Subscription</h1>
+        <h1 className="text-2xl font-semibold">Billing</h1>
         <p className="text-muted-foreground">Manage your subscription, payment methods, and billing history</p>
       </div>
 
       {/* Current Plan */}
-      <Card className="border-2 border-rose-200 bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-950 dark:to-pink-950">
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                Current Plan: {billingData?.subscription.plan}
-                <Badge variant={billingData?.subscription.status === 'active' ? 'default' : 'secondary'}>
-                  {billingData?.subscription.status}
-                </Badge>
-              </CardTitle>
-              <CardDescription>
-                {billingData?.subscription.plan === 'Free' 
-                  ? 'You are on the free plan. Upgrade to unlock more features.'
-                  : `Your subscription renews on ${format(new Date(billingData?.subscription.nextBillingDate || ''), 'MMMM d, yyyy')}`
-                }
-              </CardDescription>
-            </div>
-            <div className="text-right">
-              <p className="text-2xl font-bold">
-                ${billingData?.subscription.amount || 0}/mo
-              </p>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
-
-      {/* Usage Overview */}
-      <div className="grid gap-4 md:grid-cols-1 max-w-sm">
+      <div className="max-w-md">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pages Processed</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {billingData?.usage.pagesProcessed} / {billingData?.usage.pagesLimit}
+          <CardHeader>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  Current Plan: {billingData?.subscription.plan}
+                  <Badge variant={billingData?.subscription.status === 'active' ? 'default' : 'secondary'}>
+                    {billingData?.subscription.status}
+                  </Badge>
+                </CardTitle>
+                <CardDescription>
+                  {billingData?.subscription.plan === 'Free'
+                    ? 'You are on the free plan.'
+                    : `Renews ${format(new Date(billingData?.subscription.nextBillingDate || ''), 'MMM d, yyyy')}`
+                  }
+                </CardDescription>
+              </div>
+              <div className="text-right">
+                <p className="text-xl font-semibold">
+                  ${billingData?.subscription.amount || 0}/mo
+                </p>
+              </div>
             </div>
-            <Progress
-              value={(billingData?.usage.pagesProcessed || 0) / (billingData?.usage.pagesLimit || 1) * 100}
-              className="mt-2"
-            />
-            <p className="text-xs text-muted-foreground mt-2">
-              {billingData?.usage.pagesLimit ? billingData.usage.pagesLimit - billingData.usage.pagesProcessed : 0} pages remaining
-            </p>
-          </CardContent>
+          </CardHeader>
         </Card>
       </div>
+
 
       <Tabs defaultValue="plans" className="space-y-4">
         <TabsList>

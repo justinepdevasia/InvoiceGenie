@@ -317,8 +317,25 @@ export default function InvoicesPage() {
   })
 
   const removeFile = (fileId: string) => {
-    setFiles(files => files.filter(f => f.id !== fileId))
+    setFiles(files => {
+      const fileToRemove = files.find(f => f.id === fileId);
+      if (fileToRemove?.preview) {
+        URL.revokeObjectURL(fileToRemove.preview);
+      }
+      return files.filter(f => f.id !== fileId);
+    })
   }
+
+  // Cleanup object URLs on component unmount
+  useEffect(() => {
+    return () => {
+      files.forEach(file => {
+        if (file.preview) {
+          URL.revokeObjectURL(file.preview);
+        }
+      });
+    };
+  }, []);
 
   const uploadFiles = async () => {
     if (!selectedProject) {
@@ -473,10 +490,27 @@ export default function InvoicesPage() {
   }
 
   const getFileIcon = (file: FileWithPreview) => {
-    if (file.type && file.type.startsWith('image/')) {
-      return <Image className="h-8 w-8" />
+    if (file.type && file.type.startsWith('image/') && file.preview) {
+      return (
+        <div className="h-8 w-8 rounded border overflow-hidden bg-gray-100">
+          <img
+            src={file.preview}
+            alt={file.name}
+            className="h-full w-full object-cover"
+            onError={(e) => {
+              // Fallback to icon if image fails to load
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+              target.parentElement!.innerHTML = '<div class="h-8 w-8 flex items-center justify-center"><svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div>';
+            }}
+          />
+        </div>
+      )
     }
-    return <FileText className="h-8 w-8" />
+    if (file.type && file.type.startsWith('image/')) {
+      return <Image className="h-8 w-8 text-blue-500" />
+    }
+    return <FileText className="h-8 w-8 text-gray-500" />
   }
 
   const getUploadStatusIcon = (status: string) => {
@@ -1046,7 +1080,29 @@ export default function InvoicesPage() {
                           className="flex items-center gap-3 p-2 border rounded hover:shadow-sm transition-shadow"
                         >
                           <div className="flex-shrink-0">
-                            {getFileIcon(file)}
+                            {file.type && file.type.startsWith('image/') && file.preview ? (
+                              <div
+                                className="h-8 w-8 rounded border overflow-hidden bg-gray-100 cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
+                                onClick={() => {
+                                  // Open image in a new tab for preview
+                                  window.open(file.preview, '_blank');
+                                }}
+                                title="Click to preview image"
+                              >
+                                <img
+                                  src={file.preview}
+                                  alt={file.name}
+                                  className="h-full w-full object-cover"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    target.parentElement!.innerHTML = '<div class="h-8 w-8 flex items-center justify-center"><svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div>';
+                                  }}
+                                />
+                              </div>
+                            ) : (
+                              getFileIcon(file)
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-sm truncate" title={file.name}>

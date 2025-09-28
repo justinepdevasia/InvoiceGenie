@@ -138,30 +138,6 @@ export async function POST(request: NextRequest) {
     
     const dataUrl = `data:${mimeType};base64,${base64}`;
 
-    // Create the prompt for structured invoice extraction
-    const extractionPrompt = `Extract the following invoice information and return it as JSON:
-    - invoice_number: The invoice number or ID
-    - invoice_date: The invoice date (format: YYYY-MM-DD)
-    - due_date: The payment due date (format: YYYY-MM-DD)
-    - vendor_name: Name of the vendor/seller
-    - vendor_address: Complete address of the vendor
-    - vendor_tax_id: Tax ID or registration number
-    - customer_name: Name of the customer/buyer
-    - customer_address: Complete address of the customer
-    - subtotal: Subtotal amount before tax (number)
-    - tax_rate: Tax rate percentage (number)
-    - tax_amount: Total tax amount (number)
-    - discount_amount: Discount amount if any (number)
-    - total_amount: Total invoice amount including tax (number)
-    - currency: Currency code (USD, EUR, etc.)
-    - payment_terms: Payment terms and conditions
-    - payment_method: Accepted payment methods
-    - line_items: Array of items with description, quantity, unit_price, and amount
-    - notes: Any additional notes
-    - bank_details: Banking information (bank_name, account_number, routing_number, iban, swift)
-    
-    Return only valid JSON without any markdown formatting.`;
-
     console.log(`Processing file with type: ${fileType}`);
 
     const ocrResponse = await fetch(MISTRAL_OCR_URL, {
@@ -179,7 +155,42 @@ export async function POST(request: NextRequest) {
           type: 'image_url',
           image_url: dataUrl
         },
-        include_image_base64: false
+        include_image_base64: false,
+        response_format: 'json',
+        extract: {
+          invoice_number: 'string',
+          invoice_date: 'string',
+          due_date: 'string',
+          vendor_name: 'string',
+          vendor_address: 'string',
+          vendor_tax_id: 'string',
+          customer_name: 'string',
+          customer_address: 'string',
+          subtotal: 'number',
+          tax_rate: 'number',
+          tax_amount: 'number',
+          discount_amount: 'number',
+          total_amount: 'number',
+          currency: 'string',
+          payment_terms: 'string',
+          payment_method: 'string',
+          line_items: [
+            {
+              description: 'string',
+              quantity: 'number',
+              unit_price: 'number',
+              amount: 'number'
+            }
+          ],
+          notes: 'string',
+          bank_details: {
+            bank_name: 'string',
+            account_number: 'string',
+            routing_number: 'string',
+            iban: 'string',
+            swift: 'string'
+          }
+        }
       })
     });
 
@@ -220,31 +231,38 @@ export async function POST(request: NextRequest) {
 
     const ocrData = await ocrResponse.json();
     console.log('OCR Response Data:', JSON.stringify(ocrData, null, 2));
-    
+
     // Parse the extracted data from Mistral OCR response
     let extractedData: any = {};
-    let ocrText = '';
 
     try {
-      // Extract text from OCR response
-      if (ocrData.pages && ocrData.pages.length > 0) {
-        // Get text from all pages - Mistral OCR uses 'markdown' field
-        ocrText = ocrData.pages.map((page: any) => page.markdown || page.text || '').join('\n');
-        console.log('Extracted OCR text:', ocrText.substring(0, 500));
+      // Check if we got structured data directly from OCR
+      if (ocrData.extracted_data) {
+        // New structured JSON response format
+        extractedData = ocrData.extracted_data;
+        console.log('Extracted structured data directly from OCR:', extractedData);
+      } else if (ocrData.pages && ocrData.pages.length > 0) {
+        // Fallback to markdown parsing for backward compatibility
+        const ocrText = ocrData.pages.map((page: any) => page.markdown || page.text || '').join('\n');
+        console.log('Fallback to parsing OCR text:', ocrText.substring(0, 500));
+        extractedData = parseTextToInvoiceData(ocrText);
       } else if (ocrData.text) {
-        ocrText = ocrData.text;
+        // Direct text response
+        const ocrText = ocrData.text;
         console.log('Found direct text:', ocrText.substring(0, 500));
+        extractedData = parseTextToInvoiceData(ocrText);
       } else {
-        console.error('No text found in OCR response. Response details:', {
+        console.error('No data found in OCR response. Response details:', {
           pages: ocrData.pages,
           pageCount: ocrData.pages?.length,
           usage: ocrData.usage_info,
-          model: ocrData.model
+          model: ocrData.model,
+          extracted_data: ocrData.extracted_data
         });
 
-        // Try vision model fallback for images if OCR failed to extract text
+        // Try vision model fallback for images if OCR failed to extract data
         if (fileType && fileType.startsWith('image/')) {
-          console.log('No OCR text found, attempting vision model fallback for image...');
+          console.log('No OCR data found, attempting vision model fallback for image...');
           return fallbackToVisionModel(
             dataUrl,
             invoiceId,
@@ -254,21 +272,15 @@ export async function POST(request: NextRequest) {
           );
         } else {
           // For PDFs, create a basic record with minimal data
-          console.log('No OCR text found for PDF, creating basic record...');
+          console.log('No OCR data found for PDF, creating basic record...');
           extractedData = {
             invoice_number: 'FAILED_TO_EXTRACT',
             vendor_name: 'Unknown Vendor',
             total_amount: 0,
             currency: 'USD',
-            error_details: 'OCR failed to extract text from document'
+            error_details: 'OCR failed to extract data from document'
           };
         }
-      }
-
-      if (ocrText) {
-        // Extract structured data directly from OCR text (no AI needed - saves costs!)
-        console.log('Extracting data directly from OCR text...');
-        extractedData = parseTextToInvoiceData(ocrText);
       }
     } catch (parseError) {
       console.error('Error processing OCR data:', parseError);
@@ -285,9 +297,14 @@ export async function POST(request: NextRequest) {
           MISTRAL_API_KEY
         );
       } else {
-        // Fallback to basic text parsing with empty text
-        extractedData = parseTextToInvoiceData(ocrText || '');
-        extractedData.error_details = 'OCR parsing failed: ' + (parseError instanceof Error ? parseError.message : String(parseError));
+        // Create a minimal fallback record
+        extractedData = {
+          invoice_number: 'PARSE_ERROR',
+          vendor_name: 'Unknown Vendor',
+          total_amount: 0,
+          currency: 'USD',
+          error_details: 'OCR parsing failed: ' + (parseError instanceof Error ? parseError.message : String(parseError))
+        };
       }
     }
     

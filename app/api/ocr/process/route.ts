@@ -141,127 +141,135 @@ export async function POST(request: NextRequest) {
     console.log(`Processing file with type: ${fileType}`);
 
     // Use Mistral Document Annotation for structured invoice data extraction
+    // Based on updated API documentation, use the proper format
     const invoiceSchema = {
-      type: 'object',
-      properties: {
-        invoice_number: {
-          type: 'string',
-          description: 'The invoice number or document number'
-        },
-        invoice_date: {
-          type: 'string',
-          description: 'The date when the invoice was issued (YYYY-MM-DD format)'
-        },
-        due_date: {
-          type: 'string',
-          description: 'The payment due date (YYYY-MM-DD format)'
-        },
-        vendor_name: {
-          type: 'string',
-          description: 'The name of the vendor/supplier/company issuing the invoice'
-        },
-        vendor_address: {
-          type: 'string',
-          description: 'The full address of the vendor'
-        },
-        vendor_tax_id: {
-          type: 'string',
-          description: 'Tax ID, VAT number, or business registration number of the vendor'
-        },
-        customer_name: {
-          type: 'string',
-          description: 'The name of the customer/client being billed'
-        },
-        customer_address: {
-          type: 'string',
-          description: 'The billing address of the customer'
-        },
-        subtotal: {
-          type: 'number',
-          description: 'The subtotal amount before taxes and discounts'
-        },
-        tax_rate: {
-          type: 'number',
-          description: 'The tax rate percentage applied'
-        },
-        tax_amount: {
-          type: 'number',
-          description: 'The total tax amount'
-        },
-        discount_amount: {
-          type: 'number',
-          description: 'Any discount amount applied'
-        },
-        total_amount: {
-          type: 'number',
-          description: 'The final total amount to be paid'
-        },
-        currency: {
-          type: 'string',
-          description: 'The currency code (e.g., USD, EUR, GBP)'
-        },
-        payment_terms: {
-          type: 'string',
-          description: 'Payment terms (e.g., Net 30, Due on receipt)'
-        },
-        payment_method: {
-          type: 'string',
-          description: 'Accepted payment methods'
-        },
-        line_items: {
-          type: 'array',
-          description: 'Array of individual items/services on the invoice',
-          items: {
-            type: 'object',
-            properties: {
-              description: {
-                type: 'string',
-                description: 'Description of the item/service'
-              },
-              quantity: {
-                type: 'number',
-                description: 'Quantity of the item'
-              },
-              unit_price: {
-                type: 'number',
-                description: 'Price per unit'
-              },
-              amount: {
-                type: 'number',
-                description: 'Total amount for this line item'
+      type: 'json_schema',
+      json_schema: {
+        name: 'invoice_extraction',
+        schema: {
+          type: 'object',
+          properties: {
+            invoice_number: {
+              type: 'string',
+              description: 'The invoice number or document number'
+            },
+            invoice_date: {
+              type: 'string',
+              description: 'The date when the invoice was issued (YYYY-MM-DD format)'
+            },
+            due_date: {
+              type: 'string',
+              description: 'The payment due date (YYYY-MM-DD format)'
+            },
+            vendor_name: {
+              type: 'string',
+              description: 'The name of the vendor/supplier/company issuing the invoice'
+            },
+            vendor_address: {
+              type: 'string',
+              description: 'The full address of the vendor'
+            },
+            vendor_tax_id: {
+              type: 'string',
+              description: 'Tax ID, VAT number, or business registration number of the vendor'
+            },
+            customer_name: {
+              type: 'string',
+              description: 'The name of the customer/client being billed'
+            },
+            customer_address: {
+              type: 'string',
+              description: 'The billing address of the customer'
+            },
+            subtotal: {
+              type: 'number',
+              description: 'The subtotal amount before taxes and discounts'
+            },
+            tax_rate: {
+              type: 'number',
+              description: 'The tax rate percentage applied'
+            },
+            tax_amount: {
+              type: 'number',
+              description: 'The total tax amount'
+            },
+            discount_amount: {
+              type: 'number',
+              description: 'Any discount amount applied'
+            },
+            total_amount: {
+              type: 'number',
+              description: 'The final total amount to be paid'
+            },
+            currency: {
+              type: 'string',
+              description: 'The currency code (e.g., USD, EUR, GBP)'
+            },
+            payment_terms: {
+              type: 'string',
+              description: 'Payment terms (e.g., Net 30, Due on receipt)'
+            },
+            payment_method: {
+              type: 'string',
+              description: 'Accepted payment methods'
+            },
+            line_items: {
+              type: 'array',
+              description: 'Array of individual items/services on the invoice',
+              items: {
+                type: 'object',
+                properties: {
+                  description: {
+                    type: 'string',
+                    description: 'Description of the item/service'
+                  },
+                  quantity: {
+                    type: 'number',
+                    description: 'Quantity of the item'
+                  },
+                  unit_price: {
+                    type: 'number',
+                    description: 'Price per unit'
+                  },
+                  amount: {
+                    type: 'number',
+                    description: 'Total amount for this line item'
+                  }
+                }
+              }
+            },
+            notes: {
+              type: 'string',
+              description: 'Any additional notes or comments on the invoice'
+            },
+            bank_details: {
+              type: 'object',
+              description: 'Banking information for payment',
+              properties: {
+                bank_name: {
+                  type: 'string',
+                  description: 'Name of the bank'
+                },
+                account_number: {
+                  type: 'string',
+                  description: 'Bank account number'
+                },
+                routing_number: {
+                  type: 'string',
+                  description: 'Bank routing number'
+                },
+                iban: {
+                  type: 'string',
+                  description: 'International Bank Account Number'
+                },
+                swift: {
+                  type: 'string',
+                  description: 'SWIFT/BIC code'
+                }
               }
             }
-          }
-        },
-        notes: {
-          type: 'string',
-          description: 'Any additional notes or comments on the invoice'
-        },
-        bank_details: {
-          type: 'object',
-          description: 'Banking information for payment',
-          properties: {
-            bank_name: {
-              type: 'string',
-              description: 'Name of the bank'
-            },
-            account_number: {
-              type: 'string',
-              description: 'Bank account number'
-            },
-            routing_number: {
-              type: 'string',
-              description: 'Bank routing number'
-            },
-            iban: {
-              type: 'string',
-              description: 'International Bank Account Number'
-            },
-            swift: {
-              type: 'string',
-              description: 'SWIFT/BIC code'
-            }
-          }
+          },
+          required: ['invoice_number', 'vendor_name', 'total_amount', 'currency']
         }
       }
     };

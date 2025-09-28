@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+
+# High-traffic pages
+Crawl-delay: 1
+
+# Sitemap
+Sitemap: https://expensa-66al.onrender.com/sitemap.xml
+
+# Disallow sensitive paths
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /.env
+Disallow: /auth/

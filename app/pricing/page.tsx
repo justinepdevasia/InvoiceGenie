@@ -71,60 +71,51 @@ export default function PricingPage() {
       pages: 10,
       features: [
         { text: '10 pages per month', included: true },
-        { text: '1 project', included: true },
         { text: 'Basic OCR processing', included: true },
         { text: 'CSV export', included: true },
-        { text: 'Email support', included: true },
-        { text: 'API access', included: false },
-        { text: 'Bulk processing', included: false },
-        { text: 'Custom integrations', included: false },
-        { text: 'Priority support', included: false }
+        { text: 'Advanced OCR with AI', included: false },
+        { text: 'Multiple export formats', included: false },
+        { text: 'Batch processing', included: false }
       ]
     },
     {
       id: 'starter',
       name: 'Starter',
       description: 'For small businesses',
-      price: { monthly: 19, yearly: 190 },
-      pages: 100,
+      price: { monthly: 20, yearly: 200 },
+      pages: 300,
       stripePriceId: {
-        monthly: 'price_starter_monthly',
+        monthly: 'price_1SCOTyCLn8BJ56M1w3fVfwn3',
         yearly: 'price_starter_yearly'
       },
       features: [
-        { text: '100 pages per month', included: true },
-        { text: '5 projects', included: true },
+        { text: '300 pages per month', included: true },
         { text: 'Advanced OCR with AI', included: true },
         { text: 'Multiple export formats', included: true },
         { text: 'Batch processing', included: true },
-        { text: 'Basic API access', included: true },
-        { text: 'Email + Chat support', included: true },
-        { text: 'Custom integrations', included: false },
-        { text: 'Dedicated account manager', included: false }
+        { text: 'Premium OCR accuracy', included: false },
+        { text: 'Unlimited pages', included: false }
       ]
     },
     {
       id: 'pro',
-      name: 'Pro',
+      name: 'Professional',
       description: 'For growing teams',
-      price: { monthly: 49, yearly: 490 },
-      pages: 500,
+      price: { monthly: 50, yearly: 500 },
+      pages: 1000,
       badge: 'Most Popular',
       highlighted: true,
       stripePriceId: {
-        monthly: 'price_pro_monthly',
+        monthly: 'price_1SCOTyCLn8BJ56M1bs7K4hGl',
         yearly: 'price_pro_yearly'
       },
       features: [
-        { text: '500 pages per month', included: true, highlight: true },
-        { text: 'Unlimited projects', included: true, highlight: true },
+        { text: '1000 pages per month', included: true, highlight: true },
         { text: 'Premium OCR accuracy', included: true },
         { text: 'All export formats', included: true },
-        { text: 'Bulk processing', included: true },
-        { text: 'Full API access', included: true, highlight: true },
-        { text: 'Webhook support', included: true },
-        { text: 'Priority 24/7 support', included: true },
-        { text: 'Custom integrations', included: true }
+        { text: 'Batch processing', included: true },
+        { text: 'Advanced AI processing', included: true, highlight: true },
+        { text: 'Unlimited pages', included: false }
       ]
     },
     {
@@ -139,13 +130,10 @@ export default function PricingPage() {
       },
       features: [
         { text: 'Unlimited pages', included: true, highlight: true },
-        { text: 'Unlimited everything', included: true, highlight: true },
         { text: 'Custom AI training', included: true, highlight: true },
+        { text: 'All export formats', included: true },
+        { text: 'Advanced AI processing', included: true },
         { text: 'White-label options', included: true },
-        { text: 'Advanced analytics', included: true },
-        { text: 'Dedicated API limits', included: true },
-        { text: 'SLA guarantee', included: true },
-        { text: 'Dedicated support team', included: true },
         { text: 'On-premise deployment', included: true }
       ]
     }
@@ -164,19 +152,31 @@ export default function PricingPage() {
 
     setLoading(true)
     try {
-      // Here you would integrate with Stripe Checkout
-      // For now, we'll just simulate the flow
       const priceId = plan.stripePriceId?.[billingPeriod]
-      
-      // In production, this would create a Stripe checkout session
-      console.log('Creating checkout session for:', priceId)
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Redirect to Stripe checkout (in production)
-      alert(`Redirecting to payment for ${plan.name} plan (${billingPeriod})`)
-      
+
+      if (!priceId) {
+        alert('Price not configured for this plan.')
+        return
+      }
+
+      const response = await fetch('/api/subscriptions/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ priceId }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create subscription')
+      }
+
+      if (data.url) {
+        window.location.href = data.url
+      }
+
     } catch (error) {
       console.error('Subscription error:', error)
       alert('Failed to start subscription. Please try again.')
@@ -357,14 +357,10 @@ export default function PricingPage() {
                 </thead>
                 <tbody>
                   {[
-                    { feature: 'Pages per month', free: '10', starter: '100', pro: '500', enterprise: 'Unlimited' },
-                    { feature: 'Projects', free: '1', starter: '5', pro: 'Unlimited', enterprise: 'Unlimited' },
-                    { feature: 'OCR Accuracy', free: 'Basic', starter: 'Advanced', pro: 'Premium', enterprise: 'Custom AI' },
-                    { feature: 'Export Formats', free: 'CSV', starter: 'CSV, Excel', pro: 'All formats', enterprise: 'All + Custom' },
-                    { feature: 'API Access', free: '❌', starter: 'Basic', pro: 'Full', enterprise: 'Dedicated' },
-                    { feature: 'Webhooks', free: '❌', starter: '❌', pro: '✅', enterprise: '✅' },
-                    { feature: 'Support', free: 'Email', starter: 'Email + Chat', pro: 'Priority 24/7', enterprise: 'Dedicated Team' },
-                    { feature: 'SLA', free: '❌', starter: '❌', pro: '99.9%', enterprise: '99.99%' },
+                    { feature: 'Pages per month', free: '10', starter: '300', pro: '1000', enterprise: 'Unlimited' },
+                    { feature: 'OCR Processing', free: 'Basic', starter: 'Advanced AI', pro: 'Premium AI', enterprise: 'Custom AI' },
+                    { feature: 'Export Formats', free: 'CSV', starter: 'Multiple', pro: 'All formats', enterprise: 'All + Custom' },
+                    { feature: 'Batch Processing', free: '❌', starter: '✅', pro: '✅', enterprise: '✅' },
                     { feature: 'Custom Training', free: '❌', starter: '❌', pro: '❌', enterprise: '✅' },
                     { feature: 'White Label', free: '❌', starter: '❌', pro: '❌', enterprise: '✅' },
                   ].map((row, idx) => (

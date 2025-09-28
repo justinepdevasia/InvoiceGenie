@@ -796,13 +796,13 @@ export default function InvoiceDetailPage() {
                               <div>
                                 <h4 className="text-sm font-semibold mb-3 text-indigo-600">🏦 Bank Details</h4>
                                 <div className="grid grid-cols-2 gap-3 text-sm">
-                                  {Object.entries(invoiceData.raw_ocr_data.bank_details).map(([key, value]) => (
-                                    value && (
+                                  {Object.entries(invoiceData.raw_ocr_data.bank_details).map(([key, value]) =>
+                                    value ? (
                                       <div key={key} className="bg-indigo-50 p-2 rounded">
-                                        <span className="font-medium">{key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</span> {value}
+                                        <span className="font-medium">{key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</span> {String(value)}
                                       </div>
-                                    )
-                                  ))}
+                                    ) : null
+                                  )}
                                 </div>
                               </div>
                             )}

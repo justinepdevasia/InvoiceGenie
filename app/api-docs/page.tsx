@@ -94,12 +94,10 @@ export default function ApiDocsPage() {
               <div>
                 <h3 className="text-lg font-semibold mb-3">2. Make Your First Request</h3>
                 <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 font-mono text-sm">
-                  <code>
-                    curl -X POST https://expensa.dev/api/ocr/process<br/>
-                    -H "Authorization: Bearer YOUR_API_KEY"<br/>
-                    -H "Content-Type: application/json"<br/>
-                    -d '{"file": "base64_encoded_file"}'
-                  </code>
+                  <pre><code>{`curl -X POST https://expensa.dev/api/ocr/process \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"file": "base64_encoded_file"}'`}</code></pre>
                 </div>
               </div>
             </div>

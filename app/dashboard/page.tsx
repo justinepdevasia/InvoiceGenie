@@ -95,7 +95,7 @@ export default function DashboardPage() {
               New Project
             </Button>
           </Link>
-          <Link href="/dashboard/upload">
+          <Link href="/dashboard/invoices?tab=upload">
             <Button className="bg-primary hover:bg-primary/90">
               <Upload className="mr-2 h-4 w-4" />
               Upload Document
@@ -232,7 +232,7 @@ export default function DashboardPage() {
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <FileText className="h-12 w-12 text-muted-foreground mb-3" />
                 <p className="text-sm text-muted-foreground mb-3">No documents uploaded yet</p>
-                <Link href="/dashboard/upload">
+                <Link href="/dashboard/invoices?tab=upload">
                   <Button size="sm">
                     <Upload className="mr-2 h-4 w-4" />
                     Upload Document

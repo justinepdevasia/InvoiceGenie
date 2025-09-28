@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -97,6 +97,7 @@ interface Project {
 
 export default function InvoicesPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
@@ -122,7 +123,19 @@ export default function InvoicesPage() {
   useEffect(() => {
     fetchInvoices()
     fetchProjects()
-  }, [])
+
+    // Handle URL parameters
+    const tab = searchParams.get('tab')
+    const project = searchParams.get('project')
+
+    if (tab === 'upload') {
+      setActiveTab('upload')
+    }
+
+    if (project) {
+      setSelectedProject(project)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     filterAndSortInvoices()
@@ -576,9 +589,15 @@ export default function InvoicesPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="documents">View Documents</TabsTrigger>
-          <TabsTrigger value="upload">Upload Documents</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="documents" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            All Documents
+          </TabsTrigger>
+          <TabsTrigger value="upload" className="flex items-center gap-2">
+            <Upload className="h-4 w-4" />
+            Upload New
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="documents" className="space-y-6">

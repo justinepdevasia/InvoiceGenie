@@ -16,7 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Plus, FolderOpen, Edit, Trash2, FileText, Calendar, Search } from 'lucide-react'
+import { Plus, FolderOpen, Edit, Trash2, FileText, Calendar, Search, Upload } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -266,10 +266,9 @@ export default function ProjectsPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredProjects.map((project) => (
-            <Card 
-              key={project.id} 
-              className="hover:shadow-lg transition-all duration-300 cursor-pointer group"
-              onClick={() => router.push(`/dashboard/projects/${project.id}`)}
+            <Card
+              key={project.id}
+              className="hover:shadow-lg transition-all duration-300 group"
             >
               <CardHeader>
                 <div className="flex justify-between items-start">
@@ -303,14 +302,35 @@ export default function ProjectsPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <FileText className="h-4 w-4" />
-                    <span>{project._count?.invoices || 0} documents</span>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <FileText className="h-4 w-4" />
+                      <span>{project._count?.invoices || 0} documents</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-4 w-4" />
+                      <span>{formatDistanceToNow(new Date(project.created_at), { addSuffix: true })}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    <span>{formatDistanceToNow(new Date(project.created_at), { addSuffix: true })}</span>
+                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => router.push(`/dashboard/invoices?tab=upload&project=${project.id}`)}
+                      className="flex-1"
+                    >
+                      <Upload className="mr-2 h-4 w-4" />
+                      Add Document
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => router.push(`/dashboard/projects/${project.id}`)}
+                      className="flex-1"
+                    >
+                      View Details
+                    </Button>
                   </div>
                 </div>
               </CardContent>

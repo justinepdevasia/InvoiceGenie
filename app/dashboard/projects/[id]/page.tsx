@@ -250,8 +250,8 @@ export default function ProjectDetailsPage() {
               >
                 <Download className="mr-2 h-4 w-4" /> Export CSV
               </Button>
-              <Button 
-                onClick={() => router.push(`/dashboard/upload?project=${params.id}`)}
+              <Button
+                onClick={() => router.push(`/dashboard/invoices?tab=upload&project=${params.id}`)}
                 className="bg-gradient-primary"
               >
                 <Upload className="mr-2 h-4 w-4" /> Upload Document
@@ -273,8 +273,8 @@ export default function ProjectDetailsPage() {
                 }
               </p>
               {!searchQuery && (
-                <Button 
-                  onClick={() => router.push(`/dashboard/upload?project=${params.id}`)}
+                <Button
+                  onClick={() => router.push(`/dashboard/invoices?tab=upload&project=${params.id}`)}
                   className="bg-gradient-primary"
                 >
                   <Upload className="mr-2 h-4 w-4" /> Upload First Document

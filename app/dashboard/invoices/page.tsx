@@ -899,7 +899,6 @@ export default function InvoicesPage() {
 
         <TabsContent value="upload" className="space-y-6">
           {/* Project Selection */}
-          <div className="max-w-2xl mx-auto">
           <Card>
             <CardHeader>
               <CardTitle>Select Project</CardTitle>
@@ -933,146 +932,190 @@ export default function InvoicesPage() {
               </div>
             </CardContent>
           </Card>
-          </div>
 
-          {/* Upload Area */}
-          <div className="max-w-2xl mx-auto">
-            <Card>
-              <CardContent className="p-0">
-                <div
-                  {...getRootProps()}
-                  className={`
-                    border-2 border-dashed rounded-lg p-12 text-center cursor-pointer
-                    transition-all duration-300 transform
-                    ${isDragActive
-                      ? 'border-primary bg-primary/10 scale-105 shadow-lg'
-                      : 'border-gray-300 hover:border-primary hover:bg-primary/5 hover:scale-102'
-                    }
-                  `}
-                >
-                <input {...getInputProps()} />
-                <div className={`transition-all duration-300 ${isDragActive ? 'scale-110' : ''}`}>
-                  <Upload className={`h-16 w-16 mx-auto mb-6 transition-colors duration-300 ${
-                    isDragActive ? 'text-primary' : 'text-gray-400'
-                  }`} />
-                </div>
-                {isDragActive ? (
-                  <div className="space-y-2">
-                    <p className="text-xl font-bold text-primary">Drop files here!</p>
-                    <p className="text-primary/80">Release to upload your documents</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-xl font-bold mb-2 text-gray-900">
-                        Drag & drop your documents
-                      </p>
-                      <p className="text-gray-600 text-lg">
-                        or click to browse files
-                      </p>
+          {/* Main Upload Layout - Side by Side */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-fit">
+            {/* Left Side - Upload Area */}
+            <div className="space-y-4">
+              <Card className="h-fit">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2">
+                    <Upload className="h-5 w-5" />
+                    Upload Documents
+                  </CardTitle>
+                  <CardDescription>
+                    Drag & drop files or click to browse
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div
+                    {...getRootProps()}
+                    className={`
+                      border-2 border-dashed rounded-lg m-6 p-8 text-center cursor-pointer
+                      transition-all duration-300 transform
+                      ${isDragActive
+                        ? 'border-primary bg-primary/10 scale-105 shadow-lg'
+                        : 'border-gray-300 hover:border-primary hover:bg-primary/5 hover:scale-102'
+                      }
+                    `}
+                  >
+                    <input {...getInputProps()} />
+                    <div className={`transition-all duration-300 ${isDragActive ? 'scale-110' : ''}`}>
+                      <Upload className={`h-12 w-12 mx-auto mb-4 transition-colors duration-300 ${
+                        isDragActive ? 'text-primary' : 'text-gray-400'
+                      }`} />
                     </div>
-                    <div className="flex flex-wrap justify-center gap-2 text-sm text-gray-500">
-                      <span className="bg-gray-100 px-3 py-1 rounded-full">PDF</span>
-                      <span className="bg-gray-100 px-3 py-1 rounded-full">PNG</span>
-                      <span className="bg-gray-100 px-3 py-1 rounded-full">JPG</span>
-                      <span className="bg-gray-100 px-3 py-1 rounded-full">JPEG</span>
-                      <span className="bg-gray-100 px-3 py-1 rounded-full">GIF</span>
-                      <span className="bg-gray-100 px-3 py-1 rounded-full">WebP</span>
-                    </div>
-                    <p className="text-sm text-gray-500">
-                      Maximum file size: 10MB per file
-                    </p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-          </div>
-
-          {/* File List */}
-          {files.length > 0 && (
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle>Files ({files.length})</CardTitle>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setFiles([])}
-                      disabled={isUploading}
-                    >
-                      Clear All
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={uploadFiles}
-                      disabled={isUploading || !selectedProject}
-                      className="bg-gradient-to-r from-rose-500 to-pink-600"
-                    >
-                      {isUploading ? 'Uploading...' : 'Upload All'}
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {files.map(file => (
-                    <div
-                      key={file.id}
-                      className="flex items-center justify-between p-3 border rounded-lg"
-                    >
-                      <div className="flex items-center gap-3 flex-1">
-                        {getFileIcon(file)}
-                        <div className="flex-1">
-                          <p className="font-medium text-sm">{file.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {file.size ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : 'Processing...'}
+                    {isDragActive ? (
+                      <div className="space-y-2">
+                        <p className="text-lg font-bold text-primary">Drop files here!</p>
+                        <p className="text-primary/80">Release to upload</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-lg font-bold mb-1 text-gray-900">
+                            Drop files here
                           </p>
-                          {file.status === 'uploading' || file.status === 'processing' ? (
-                            <div className="mt-2 space-y-1">
-                              <div className="flex justify-between text-xs">
-                                <span className="text-primary font-medium">
-                                  {file.status === 'uploading' ? 'Uploading...' : 'Processing...'}
-                                </span>
-                                <span className="text-muted-foreground">{file.progress}%</span>
-                              </div>
-                              <Progress
-                                value={file.progress}
-                                className="h-2"
-                              />
-                            </div>
-                          ) : file.error ? (
-                            <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-md">
-                              <p className="text-xs text-red-700 font-medium">Upload Failed</p>
-                              <p className="text-xs text-red-600 mt-1">{file.error}</p>
-                            </div>
-                          ) : file.status === 'completed' ? (
-                            <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
-                              <p className="text-xs text-green-700 font-medium">Successfully processed!</p>
-                            </div>
-                          ) : null}
+                          <p className="text-gray-600">
+                            or click to browse
+                          </p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {getUploadStatusIcon(file.status)}
-                          {file.status === 'pending' && !isUploading && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeFile(file.id)}
-                              className="hover:bg-red-50 hover:text-red-600"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          )}
+                        <div className="flex flex-wrap justify-center gap-1 text-xs text-gray-500">
+                          <span className="bg-gray-100 px-2 py-1 rounded">PDF</span>
+                          <span className="bg-gray-100 px-2 py-1 rounded">PNG</span>
+                          <span className="bg-gray-100 px-2 py-1 rounded">JPG</span>
+                          <span className="bg-gray-100 px-2 py-1 rounded">JPEG</span>
+                          <span className="bg-gray-100 px-2 py-1 rounded">GIF</span>
+                          <span className="bg-gray-100 px-2 py-1 rounded">WebP</span>
                         </div>
+                        <p className="text-xs text-gray-500">
+                          Max: 10MB per file
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Upload Actions */}
+              {files.length > 0 && (
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-center">
+                      <div className="text-sm text-muted-foreground">
+                        {files.length} file{files.length > 1 ? 's' : ''} ready
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setFiles([])}
+                          disabled={isUploading}
+                        >
+                          Clear All
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={uploadFiles}
+                          disabled={isUploading || !selectedProject || files.length === 0}
+                          className="bg-gradient-to-r from-rose-500 to-pink-600"
+                        >
+                          {isUploading ? 'Uploading...' : 'Upload All'}
+                        </Button>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            {/* Right Side - File List */}
+            <div className="space-y-4">
+              <Card className="h-fit">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Selected Files ({files.length})
+                  </CardTitle>
+                  <CardDescription>
+                    {files.length === 0
+                      ? "Files will appear here after selection"
+                      : `${files.filter(f => f.status === 'completed').length} completed, ${files.filter(f => f.status === 'failed').length} failed`
+                    }
+                  </CardDescription>
+                </CardHeader>
+                {files.length > 0 && (
+                  <CardContent className="max-h-96 overflow-y-auto">
+                    <div className="space-y-3">
+                      {files.map(file => (
+                        <div
+                          key={file.id}
+                          className="flex items-start gap-3 p-3 border rounded-lg hover:shadow-sm transition-shadow"
+                        >
+                          <div className="flex-shrink-0 mt-1">
+                            {getFileIcon(file)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate" title={file.name}>
+                              {file.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {file.size ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : 'Processing...'}
+                            </p>
+                            {file.status === 'uploading' || file.status === 'processing' ? (
+                              <div className="mt-2 space-y-1">
+                                <div className="flex justify-between text-xs">
+                                  <span className="text-primary font-medium">
+                                    {file.status === 'uploading' ? 'Uploading...' : 'Processing...'}
+                                  </span>
+                                  <span className="text-muted-foreground">{file.progress}%</span>
+                                </div>
+                                <Progress
+                                  value={file.progress}
+                                  className="h-1.5"
+                                />
+                              </div>
+                            ) : file.error ? (
+                              <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-md">
+                                <p className="text-xs text-red-700 font-medium">Upload Failed</p>
+                                <p className="text-xs text-red-600 mt-1 break-words">{file.error}</p>
+                              </div>
+                            ) : file.status === 'completed' ? (
+                              <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
+                                <p className="text-xs text-green-700 font-medium">Successfully processed!</p>
+                              </div>
+                            ) : null}
+                          </div>
+                          <div className="flex-shrink-0 flex items-center gap-2">
+                            {getUploadStatusIcon(file.status)}
+                            {file.status === 'pending' && !isUploading && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeFile(file.id)}
+                                className="hover:bg-red-50 hover:text-red-600 h-8 w-8 p-0"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                )}
+                {files.length === 0 && (
+                  <CardContent>
+                    <div className="text-center py-8 text-muted-foreground">
+                      <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p className="text-sm">No files selected</p>
+                      <p className="text-xs mt-1">Add files using the upload area</p>
+                    </div>
+                  </CardContent>
+                )}
+              </Card>
+            </div>
+          </div>
 
           {/* Upload Success */}
           {uploadComplete && (

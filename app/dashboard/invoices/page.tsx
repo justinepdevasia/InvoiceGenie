@@ -76,6 +76,8 @@ interface Invoice {
   created_at: string
   confidence_score: number
   tags: string[]
+  project_id: string
+  project_name?: string
 }
 
 interface FileWithPreview {
@@ -104,6 +106,7 @@ export default function InvoicesPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [dateFilter, setDateFilter] = useState('all')
+  const [projectFilter, setProjectFilter] = useState('all')
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'vendor'>('date')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [currentPage, setCurrentPage] = useState(1)
@@ -139,7 +142,7 @@ export default function InvoicesPage() {
 
   useEffect(() => {
     filterAndSortInvoices()
-  }, [invoices, searchTerm, statusFilter, dateFilter, sortBy, sortOrder])
+  }, [invoices, searchTerm, statusFilter, dateFilter, projectFilter, sortBy, sortOrder])
 
   const fetchInvoices = async () => {
     try {
@@ -147,7 +150,7 @@ export default function InvoicesPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      // Fetch invoices with their data
+      // Fetch invoices with their data and project info
       const { data, error } = await supabase
         .from('invoices')
         .select(`
@@ -159,6 +162,9 @@ export default function InvoicesPage() {
             currency,
             invoice_date,
             confidence_score
+          ),
+          projects (
+            name
           )
         `)
         .eq('user_id', user.id)
@@ -178,7 +184,9 @@ export default function InvoicesPage() {
         file_name: inv.original_file_name,
         created_at: inv.created_at,
         confidence_score: inv.invoice_data?.[0]?.confidence_score || 0,
-        tags: inv.tags || []
+        tags: inv.tags || [],
+        project_id: inv.project_id,
+        project_name: inv.projects?.name || 'Unknown Project'
       })) || []
 
       setInvoices(transformedInvoices)
@@ -229,6 +237,11 @@ export default function InvoicesPage() {
     // Status filter
     if (statusFilter !== 'all') {
       filtered = filtered.filter(inv => inv.status === statusFilter)
+    }
+
+    // Project filter
+    if (projectFilter !== 'all') {
+      filtered = filtered.filter(inv => inv.project_id === projectFilter)
     }
 
     // Date filter
@@ -687,6 +700,23 @@ export default function InvoicesPage() {
                 </SelectContent>
               </Select>
 
+              <Select value={projectFilter} onValueChange={setProjectFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Project" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Projects</SelectItem>
+                  {projects.map(project => (
+                    <SelectItem key={project.id} value={project.id}>
+                      <div className="flex items-center gap-2">
+                        <FolderOpen className="h-4 w-4" />
+                        {project.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               <Select value={dateFilter} onValueChange={setDateFilter}>
                 <SelectTrigger className="w-[150px]">
                   <SelectValue placeholder="Date" />
@@ -738,6 +768,7 @@ export default function InvoicesPage() {
                   </TableHead>
                   <TableHead>Doc #</TableHead>
                   <TableHead>Vendor</TableHead>
+                  <TableHead>Project</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Status</TableHead>
@@ -769,6 +800,14 @@ export default function InvoicesPage() {
                       <div className="flex items-center gap-2">
                         <Building className="h-4 w-4 text-gray-400" />
                         {invoice.vendor_name}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <FolderOpen className="h-4 w-4 text-gray-400" />
+                        <span className="text-sm text-muted-foreground">
+                          {invoice.project_name}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>

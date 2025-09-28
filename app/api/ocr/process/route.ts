@@ -529,10 +529,10 @@ function parseTextToInvoiceData(text: string) {
 
   // Extract amounts - try multiple patterns
   const amountPatterns = [
-    /total\s*:?\s*\$?([0-9,]+\.?[0-9]*)/i,
-    /amount\s*:?\s*\$?([0-9,]+\.?[0-9]*)/i,
-    /grand\s*total\s*:?\s*\$?([0-9,]+\.?[0-9]*)/i,
-    /balance\s*:?\s*\$?([0-9,]+\.?[0-9]*)/i,
+    /total\s*:?\s*\$?([0-9,]+\.?[0-9]*)/gi,
+    /amount\s*:?\s*\$?([0-9,]+\.?[0-9]*)/gi,
+    /grand\s*total\s*:?\s*\$?([0-9,]+\.?[0-9]*)/gi,
+    /balance\s*:?\s*\$?([0-9,]+\.?[0-9]*)/gi,
     /\$\s*([0-9,]+\.?[0-9]*)/g
   ];
 

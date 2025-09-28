@@ -321,8 +321,12 @@ export async function POST(request: NextRequest) {
 
     try {
       if (ocrData.document_annotation) {
-        // Document annotation contains the structured data
-        extractedData = ocrData.document_annotation;
+        // Document annotation contains the structured data as a JSON string
+        if (typeof ocrData.document_annotation === 'string') {
+          extractedData = JSON.parse(ocrData.document_annotation);
+        } else {
+          extractedData = ocrData.document_annotation;
+        }
         console.log('Extracted structured data from document annotation:', extractedData);
       } else if (ocrData.annotations && ocrData.annotations.length > 0) {
         // Fallback if annotations are in a different structure

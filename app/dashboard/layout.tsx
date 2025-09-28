@@ -8,15 +8,13 @@ import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { FileText, Home, FolderOpen, Upload, CreditCard, Settings, LogOut, Menu, BarChart3, FileStack, User, Plug } from 'lucide-react'
+import { FileText, Home, FolderOpen, CreditCard, Settings, LogOut, Menu, FileStack, User } from 'lucide-react'
 import { AuthGuard } from '@/components/auth/auth-guard'
 
 const sidebarItems = [
   { href: '/dashboard', icon: Home, label: 'Overview' },
   { href: '/dashboard/projects', icon: FolderOpen, label: 'Projects' },
   { href: '/dashboard/invoices', icon: FileStack, label: 'Documents' },
-  { href: '/dashboard/integrations', icon: Plug, label: 'Integrations' },
-  { href: '/dashboard/analytics', icon: BarChart3, label: 'Analytics' },
   { href: '/dashboard/billing', icon: CreditCard, label: 'Billing' },
   { href: '/dashboard/settings', icon: Settings, label: 'Settings' },
 ]

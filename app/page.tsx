@@ -21,11 +21,6 @@ export default function HomePage() {
             </span>
           </div>
           <div className="flex items-center space-x-4">
-            <Link href="/api-docs">
-              <Button variant="ghost" className="hover:text-rose-500 transition-colors">
-                API Docs
-              </Button>
-            </Link>
             <Link href="/pricing">
               <Button variant="ghost" className="hover:text-rose-500 transition-colors">
                 Pricing
@@ -132,31 +127,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Partners/Social Proof Section */}
+      {/* Simple Stats Section */}
       <section className="container py-16 border-b bg-gray-50/50 dark:bg-gray-900/50">
-        <div className="text-center mb-12">
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-8">Trusted by companies all</p>
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-8 items-center opacity-60">
-            {[
-              "Microsoft", "Shopify", "Stripe", "Slack", "Notion", "Figma"
-            ].map((company) => (
-              <div key={company} className="text-center">
-                <div className="h-8 w-20 bg-gray-300 dark:bg-gray-600 rounded-md mx-auto flex items-center justify-center">
-                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{company}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-8 border-t border-gray-200 dark:border-gray-700">
-          <div className="text-center">
-            <div className="text-4xl font-bold bg-gradient-to-r from-rose-500 to-pink-600 bg-clip-text text-transparent">
-              10M+
-            </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Documents Processed</div>
-          </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-8 max-w-3xl mx-auto text-center">
           <div className="text-center">
             <div className="text-4xl font-bold bg-gradient-to-r from-rose-500 to-pink-600 bg-clip-text text-transparent">
               99.9%
@@ -165,9 +138,9 @@ export default function HomePage() {
           </div>
           <div className="text-center">
             <div className="text-4xl font-bold bg-gradient-to-r from-rose-500 to-pink-600 bg-clip-text text-transparent">
-              50K+
+              60s
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Happy Users</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Processing Time</div>
           </div>
           <div className="text-center">
             <div className="text-4xl font-bold bg-gradient-to-r from-rose-500 to-pink-600 bg-clip-text text-transparent">
@@ -370,7 +343,7 @@ export default function HomePage() {
                 name: "Starter",
                 price: "$100",
                 period: "/month",
-                description: "Perfect for small teams starting out",
+                description: "Perfect for getting started",
                 features: [
                   "Up to 500 documents/month",
                   "Basic OCR processing",
@@ -401,16 +374,16 @@ export default function HomePage() {
                 highlighted: true,
                 badge: "Most Popular",
                 cta: "Get Started",
-                note: "Most teams choose this plan"
+                note: "Most popular choice"
               },
               {
                 name: "Advanced",
                 price: "$300",
                 period: "/month",
-                description: "For enterprise-scale operations",
+                description: "For high-volume processing",
                 features: [
                   "Unlimited documents",
-                  "Enterprise AI processing",
+                  "Advanced AI processing",
                   "White-label solution",
                   "Dedicated support",
                   "Custom integrations",
@@ -421,7 +394,7 @@ export default function HomePage() {
                 ],
                 highlighted: false,
                 cta: "Contact Sales",
-                note: "Custom enterprise pricing available"
+                note: "Custom pricing available"
               }
             ].map((plan) => (
               <Card
@@ -592,7 +565,7 @@ export default function HomePage() {
               <span className="text-gray-600 dark:text-gray-400">from 2,847+ reviews</span>
             </div>
             <p className="text-gray-600 dark:text-gray-400">
-              Join thousands of finance teams already saving 40+ hours per week
+              Join thousands of users already saving 40+ hours per week
             </p>
           </div>
         </div>
@@ -699,7 +672,7 @@ export default function HomePage() {
                 <span className="block text-gradient">Let people know they're buying</span>
               </h2>
               <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-3xl mx-auto">
-                Stop wasting 40+ hours per month on manual expense processing. Join 50,000+ finance teams who've already made the switch to AI-powered automation.
+                Stop wasting 40+ hours per month on manual expense processing. Join thousands of users who've already made the switch to AI-powered automation.
               </p>
 
               {/* Value highlights */}
@@ -778,7 +751,7 @@ export default function HomePage() {
                 </span>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Intelligent expense document processing powered by advanced AI. Making finance teams happier, one document at a time.
+                Intelligent expense document processing powered by advanced AI. Making financial work easier, one document at a time.
               </p>
               <div className="flex gap-4 mt-4">
                 {/* Social icons could go here */}
@@ -798,7 +771,6 @@ export default function HomePage() {
               <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
                 <li><Link href="/about" className="hover:text-rose-500 transition-colors">About</Link></li>
                 <li><Link href="/blog" className="hover:text-rose-500 transition-colors">Blog</Link></li>
-                <li><Link href="/careers" className="hover:text-rose-500 transition-colors">Careers</Link></li>
                 <li><Link href="/contact" className="hover:text-rose-500 transition-colors">Contact</Link></li>
               </ul>
             </div>
@@ -813,7 +785,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="mt-8 pt-8 border-t text-center text-sm text-gray-600 dark:text-gray-400">
-            <p>© 2024 Expensa. All rights reserved. Made with ❤️ for finance teams everywhere.</p>
+            <p>© 2024 Expensa. All rights reserved. Made with ❤️ for better financial workflows.</p>
           </div>
         </div>
       </footer>

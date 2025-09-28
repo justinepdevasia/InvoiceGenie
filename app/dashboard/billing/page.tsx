@@ -80,78 +80,51 @@ export default function BillingPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      // Fetch user's subscription data
-      const { data: subscription } = await supabase
-        .from('subscriptions')
-        .select('*')
-        .eq('user_id', user.id)
-        .single()
+      // Fetch subscription and usage data from API
+      const response = await fetch('/api/subscriptions')
+      if (!response.ok) {
+        throw new Error('Failed to fetch subscription data')
+      }
 
-      // Fetch usage data
-      const { data: usage } = await supabase
-        .from('usage_metrics')
-        .select('*')
-        .eq('user_id', user.id)
-        .single()
+      const { subscription, usage } = await response.json()
 
-      // Mock billing data for demo
-      const mockBillingData: BillingData = {
+      const billingData: BillingData = {
         subscription: {
-          plan: subscription?.plan || 'Free',
-          status: subscription?.status || 'active',
-          currentPeriodEnd: subscription?.current_period_end || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          nextBillingDate: subscription?.next_billing_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          amount: subscription?.amount || 0
+          plan: subscription.plan || 'free',
+          status: subscription.status || 'active',
+          currentPeriodEnd: subscription.current_period_end || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          nextBillingDate: subscription.current_period_end || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          amount: subscription.amount ? subscription.amount / 100 : 0 // Convert cents to dollars
         },
         usage: {
-          pagesProcessed: usage?.pages_processed || 8,
-          pagesLimit: usage?.pages_limit || 10,
-          storageUsed: usage?.storage_used || 120,
-          storageLimit: usage?.storage_limit || 500,
-          apiCalls: usage?.api_calls || 450,
-          apiLimit: usage?.api_limit || 1000
+          pagesProcessed: usage.pages_processed || 0,
+          pagesLimit: usage.pages_limit || 10,
+          storageUsed: usage.storage_used || 0,
+          storageLimit: usage.storage_limit || 524288000, // 500MB
+          apiCalls: usage.api_calls || 0,
+          apiLimit: usage.api_limit || 1000
         },
         paymentMethod: {
           type: 'card',
-          last4: '4242',
+          last4: '****',
           expiryMonth: 12,
           expiryYear: 2025,
-          brand: 'Visa'
+          brand: 'Card'
         },
-        invoices: [
-          {
-            id: 'inv_001',
-            date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-            amount: 29,
-            status: 'paid',
-            downloadUrl: '#'
-          },
-          {
-            id: 'inv_002',
-            date: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-            amount: 29,
-            status: 'paid',
-            downloadUrl: '#'
-          },
-          {
-            id: 'inv_003',
-            date: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
-            amount: 29,
-            status: 'paid',
-            downloadUrl: '#'
-          }
-        ],
+        invoices: [],
         upcomingInvoice: {
-          amount: 29,
-          date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          items: [
-            { description: 'Pro Plan - Monthly', amount: 29 },
-            { description: 'Additional Storage (20GB)', amount: 0 }
-          ]
+          amount: subscription.amount ? subscription.amount / 100 : 0,
+          date: subscription.current_period_end || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          items: subscription.plan !== 'free' ? [
+            {
+              description: `${subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)} Plan - Monthly`,
+              amount: subscription.amount ? subscription.amount / 100 : 0
+            }
+          ] : []
         }
       }
 
-      setBillingData(mockBillingData)
+      setBillingData(billingData)
     } catch (error) {
       console.error('Error fetching billing data:', error)
     } finally {
@@ -161,42 +134,102 @@ export default function BillingPage() {
 
   const handleUpgradePlan = async (plan: string) => {
     setProcessingUpgrade(true)
-    // Simulate upgrade process
-    setTimeout(() => {
-      alert(`Upgrading to ${plan} plan...`)
+    try {
+      let priceId = ''
+      if (plan === 'starter') {
+        priceId = 'price_1SCOTyCLn8BJ56M1w3fVfwn3' // $20/month for 300 pages
+      } else if (plan === 'professional') {
+        priceId = 'price_1SCOTyCLn8BJ56M1bs7K4hGl' // $50/month for 1000 pages
+      }
+
+      const response = await fetch('/api/subscriptions/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ priceId })
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.url) {
+        // Redirect to Stripe Checkout
+        window.location.href = data.url
+      } else {
+        throw new Error(data.error || 'Failed to create subscription')
+      }
+    } catch (error) {
+      console.error('Error upgrading plan:', error)
+      alert('Failed to upgrade plan. Please try again.')
+    } finally {
       setProcessingUpgrade(false)
-    }, 2000)
+    }
   }
 
-  const handleUpdatePaymentMethod = () => {
-    alert('Opening payment method update form...')
+  const handleUpdatePaymentMethod = async () => {
+    try {
+      const response = await fetch('/api/subscriptions/portal', {
+        method: 'POST'
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.url) {
+        // Redirect to Stripe Customer Portal
+        window.location.href = data.url
+      } else {
+        throw new Error(data.error || 'Failed to open customer portal')
+      }
+    } catch (error) {
+      console.error('Error opening customer portal:', error)
+      alert('Failed to open payment management. Please try again.')
+    }
   }
 
-  const handleCancelSubscription = () => {
-    if (confirm('Are you sure you want to cancel your subscription?')) {
-      alert('Subscription cancellation initiated...')
+  const handleCancelSubscription = async () => {
+    if (confirm('Are you sure you want to cancel your subscription? You will lose access to premium features at the end of your billing period.')) {
+      try {
+        const response = await fetch('/api/subscriptions/portal', {
+          method: 'POST'
+        })
+
+        const data = await response.json()
+
+        if (response.ok && data.url) {
+          // Redirect to Stripe Customer Portal where they can cancel
+          window.location.href = data.url
+        } else {
+          throw new Error(data.error || 'Failed to open customer portal')
+        }
+      } catch (error) {
+        console.error('Error opening customer portal:', error)
+        alert('Failed to open subscription management. Please try again.')
+      }
     }
   }
 
   const plans = [
     {
-      name: 'Free',
+      name: 'free',
+      displayName: 'Free',
       price: 0,
-      features: ['10 pages/month', '100MB storage', '100 API calls', 'Basic support'],
-      current: billingData?.subscription.plan === 'Free'
+      features: ['10 pages/month', '500MB storage', '1,000 API calls', 'Basic support'],
+      current: billingData?.subscription.plan === 'free'
     },
     {
-      name: 'Pro',
-      price: 29,
-      features: ['500 pages/month', '5GB storage', '5,000 API calls', 'Priority support', 'Advanced analytics'],
-      current: billingData?.subscription.plan === 'Pro',
+      name: 'starter',
+      displayName: 'Starter',
+      price: 20,
+      features: ['300 pages/month', '5GB storage', '5,000 API calls', 'Priority support', 'Email support'],
+      current: billingData?.subscription.plan === 'starter',
       recommended: true
     },
     {
-      name: 'Enterprise',
-      price: 99,
-      features: ['Unlimited pages', 'Unlimited storage', 'Unlimited API calls', '24/7 support', 'Custom integrations', 'Dedicated account manager'],
-      current: billingData?.subscription.plan === 'Enterprise'
+      name: 'professional',
+      displayName: 'Professional',
+      price: 50,
+      features: ['1,000 pages/month', '20GB storage', '20,000 API calls', '24/7 support', 'Custom integrations', 'Priority processing'],
+      current: billingData?.subscription.plan === 'professional'
     }
   ]
 
@@ -260,7 +293,7 @@ export default function BillingPage() {
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle>{plan.name}</CardTitle>
+                      <CardTitle>{plan.displayName}</CardTitle>
                       <p className="text-3xl font-bold mt-2">${plan.price}/mo</p>
                     </div>
                     {plan.recommended && (
@@ -286,7 +319,7 @@ export default function BillingPage() {
                     disabled={plan.current || processingUpgrade}
                     onClick={() => handleUpgradePlan(plan.name)}
                   >
-                    {plan.current ? 'Current Plan' : `Upgrade to ${plan.name}`}
+                    {plan.current ? 'Current Plan' : `Upgrade to ${plan.displayName}`}
                   </Button>
                 </CardContent>
               </Card>

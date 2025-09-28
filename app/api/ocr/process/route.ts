@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { checkUsageLimit, incrementUsage } from '@/lib/usage';
 
 const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY;
 const MISTRAL_OCR_URL = 'https://api.mistral.ai/v1/ocr';
@@ -15,6 +16,18 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check usage limits before processing
+    const usageCheck = await checkUsageLimit(user.id, 1);
+    if (!usageCheck.success) {
+      return NextResponse.json({
+        error: 'Usage limit exceeded',
+        details: usageCheck.error,
+        remaining: usageCheck.remaining,
+        limit: usageCheck.limit,
+        upgrade_required: true
+      }, { status: 429 });
     }
 
     const requestData = await request.json();
@@ -416,21 +429,8 @@ export async function POST(request: NextRequest) {
       .eq('id', invoiceId)
       .eq('user_id', user.id);
 
-    // Check and update user's usage
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('pages_used, pages_limit')
-      .eq('id', user.id)
-      .single();
-
-    if (profile) {
-      await supabase
-        .from('profiles')
-        .update({ 
-          pages_used: (profile.pages_used || 0) + 1
-        })
-        .eq('id', user.id);
-    }
+    // Update user's usage
+    await incrementUsage(user.id, 1);
 
     return NextResponse.json({
       success: true,
@@ -600,21 +600,8 @@ async function extractStructuredDataWithVision(
       .eq('id', invoiceId)
       .eq('user_id', userId);
 
-    // Check and update user's usage
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('pages_used, pages_limit')
-      .eq('id', userId)
-      .single();
-
-    if (profile) {
-      await supabase
-        .from('profiles')
-        .update({
-          pages_used: (profile.pages_used || 0) + 1
-        })
-        .eq('id', userId);
-    }
+    // Update user's usage
+    await incrementUsage(userId, 1);
 
     return NextResponse.json({
       success: true,

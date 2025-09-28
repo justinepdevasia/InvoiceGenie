@@ -140,6 +140,132 @@ export async function POST(request: NextRequest) {
 
     console.log(`Processing file with type: ${fileType}`);
 
+    // Use Mistral Document Annotation for structured invoice data extraction
+    const invoiceSchema = {
+      type: 'object',
+      properties: {
+        invoice_number: {
+          type: 'string',
+          description: 'The invoice number or document number'
+        },
+        invoice_date: {
+          type: 'string',
+          description: 'The date when the invoice was issued (YYYY-MM-DD format)'
+        },
+        due_date: {
+          type: 'string',
+          description: 'The payment due date (YYYY-MM-DD format)'
+        },
+        vendor_name: {
+          type: 'string',
+          description: 'The name of the vendor/supplier/company issuing the invoice'
+        },
+        vendor_address: {
+          type: 'string',
+          description: 'The full address of the vendor'
+        },
+        vendor_tax_id: {
+          type: 'string',
+          description: 'Tax ID, VAT number, or business registration number of the vendor'
+        },
+        customer_name: {
+          type: 'string',
+          description: 'The name of the customer/client being billed'
+        },
+        customer_address: {
+          type: 'string',
+          description: 'The billing address of the customer'
+        },
+        subtotal: {
+          type: 'number',
+          description: 'The subtotal amount before taxes and discounts'
+        },
+        tax_rate: {
+          type: 'number',
+          description: 'The tax rate percentage applied'
+        },
+        tax_amount: {
+          type: 'number',
+          description: 'The total tax amount'
+        },
+        discount_amount: {
+          type: 'number',
+          description: 'Any discount amount applied'
+        },
+        total_amount: {
+          type: 'number',
+          description: 'The final total amount to be paid'
+        },
+        currency: {
+          type: 'string',
+          description: 'The currency code (e.g., USD, EUR, GBP)'
+        },
+        payment_terms: {
+          type: 'string',
+          description: 'Payment terms (e.g., Net 30, Due on receipt)'
+        },
+        payment_method: {
+          type: 'string',
+          description: 'Accepted payment methods'
+        },
+        line_items: {
+          type: 'array',
+          description: 'Array of individual items/services on the invoice',
+          items: {
+            type: 'object',
+            properties: {
+              description: {
+                type: 'string',
+                description: 'Description of the item/service'
+              },
+              quantity: {
+                type: 'number',
+                description: 'Quantity of the item'
+              },
+              unit_price: {
+                type: 'number',
+                description: 'Price per unit'
+              },
+              amount: {
+                type: 'number',
+                description: 'Total amount for this line item'
+              }
+            }
+          }
+        },
+        notes: {
+          type: 'string',
+          description: 'Any additional notes or comments on the invoice'
+        },
+        bank_details: {
+          type: 'object',
+          description: 'Banking information for payment',
+          properties: {
+            bank_name: {
+              type: 'string',
+              description: 'Name of the bank'
+            },
+            account_number: {
+              type: 'string',
+              description: 'Bank account number'
+            },
+            routing_number: {
+              type: 'string',
+              description: 'Bank routing number'
+            },
+            iban: {
+              type: 'string',
+              description: 'International Bank Account Number'
+            },
+            swift: {
+              type: 'string',
+              description: 'SWIFT/BIC code'
+            }
+          }
+        }
+      }
+    };
+
     const ocrResponse = await fetch(MISTRAL_OCR_URL, {
       method: 'POST',
       headers: {
@@ -155,157 +281,63 @@ export async function POST(request: NextRequest) {
           type: 'image_url',
           image_url: dataUrl
         },
-        include_image_base64: false,
-        response_format: 'json',
-        extract: {
-          invoice_number: 'string',
-          invoice_date: 'string',
-          due_date: 'string',
-          vendor_name: 'string',
-          vendor_address: 'string',
-          vendor_tax_id: 'string',
-          customer_name: 'string',
-          customer_address: 'string',
-          subtotal: 'number',
-          tax_rate: 'number',
-          tax_amount: 'number',
-          discount_amount: 'number',
-          total_amount: 'number',
-          currency: 'string',
-          payment_terms: 'string',
-          payment_method: 'string',
-          line_items: [
-            {
-              description: 'string',
-              quantity: 'number',
-              unit_price: 'number',
-              amount: 'number'
-            }
-          ],
-          notes: 'string',
-          bank_details: {
-            bank_name: 'string',
-            account_number: 'string',
-            routing_number: 'string',
-            iban: 'string',
-            swift: 'string'
-          }
-        }
+        document_annotation_format: invoiceSchema,
+        include_image_base64: false
       })
     });
 
     console.log('OCR Response Status:', ocrResponse.status);
-    
+
     if (!ocrResponse.ok) {
       const errorText = await ocrResponse.text();
       console.error('Mistral OCR API error:', errorText);
       console.error('Response status:', ocrResponse.status);
-      
-      // Fallback to vision model for images only if OCR fails
-      if (fileType && fileType.startsWith('image/')) {
-        console.log('OCR failed, attempting fallback to vision model...');
-        return fallbackToVisionModel(
-          dataUrl, 
-          invoiceId, 
-          user.id, 
-          supabase, 
-          MISTRAL_API_KEY
-        );
-      } else {
-        // For PDFs, we can't use vision fallback, so return the OCR error
-        console.error('OCR failed for PDF file, no fallback available');
-        
-        await supabase
-          .from('invoices')
-          .update({ processing_status: 'failed' })
-          .eq('id', invoiceId)
-          .eq('user_id', user.id);
-          
-        return NextResponse.json({
-          error: 'OCR processing failed for PDF',
-          details: errorText,
-          status: ocrResponse.status
-        }, { status: ocrResponse.status });
-      }
+
+      // Fallback to vision model for structured extraction
+      console.log('OCR failed, using vision model for structured extraction...');
+      return extractStructuredDataWithVision(
+        dataUrl,
+        '',
+        invoiceId,
+        user.id,
+        supabase,
+        MISTRAL_API_KEY
+      );
     }
 
     const ocrData = await ocrResponse.json();
     console.log('OCR Response Data:', JSON.stringify(ocrData, null, 2));
 
-    // Parse the extracted data from Mistral OCR response
+    // Extract structured data from annotation response
     let extractedData: any = {};
 
     try {
-      // Check if we got structured data directly from OCR
-      if (ocrData.extracted_data) {
-        // New structured JSON response format
-        extractedData = ocrData.extracted_data;
-        console.log('Extracted structured data directly from OCR:', extractedData);
-      } else if (ocrData.pages && ocrData.pages.length > 0) {
-        // Fallback to markdown parsing for backward compatibility
-        const ocrText = ocrData.pages.map((page: any) => page.markdown || page.text || '').join('\n');
-        console.log('Fallback to parsing OCR text:', ocrText.substring(0, 500));
-        extractedData = parseTextToInvoiceData(ocrText);
-      } else if (ocrData.text) {
-        // Direct text response
-        const ocrText = ocrData.text;
-        console.log('Found direct text:', ocrText.substring(0, 500));
-        extractedData = parseTextToInvoiceData(ocrText);
+      if (ocrData.document_annotation) {
+        // Document annotation contains the structured data
+        extractedData = ocrData.document_annotation;
+        console.log('Extracted structured data from document annotation:', extractedData);
+      } else if (ocrData.annotations && ocrData.annotations.length > 0) {
+        // Fallback if annotations are in a different structure
+        extractedData = ocrData.annotations[0];
+        console.log('Extracted from annotations array:', extractedData);
       } else {
-        console.error('No data found in OCR response. Response details:', {
-          pages: ocrData.pages,
-          pageCount: ocrData.pages?.length,
-          usage: ocrData.usage_info,
-          model: ocrData.model,
-          extracted_data: ocrData.extracted_data
-        });
-
-        // Try vision model fallback for images if OCR failed to extract data
-        if (fileType && fileType.startsWith('image/')) {
-          console.log('No OCR data found, attempting vision model fallback for image...');
-          return fallbackToVisionModel(
-            dataUrl,
-            invoiceId,
-            user.id,
-            supabase,
-            MISTRAL_API_KEY
-          );
-        } else {
-          // For PDFs, create a basic record with minimal data
-          console.log('No OCR data found for PDF, creating basic record...');
-          extractedData = {
-            invoice_number: 'FAILED_TO_EXTRACT',
-            vendor_name: 'Unknown Vendor',
-            total_amount: 0,
-            currency: 'USD',
-            error_details: 'OCR failed to extract data from document'
-          };
-        }
+        console.error('No structured data found in OCR response');
+        throw new Error('No annotation data found in OCR response');
       }
     } catch (parseError) {
-      console.error('Error processing OCR data:', parseError);
+      console.error('Error processing OCR annotation data:', parseError);
       console.error('Raw OCR data:', ocrData);
 
-      // Try vision model fallback for images
-      if (fileType && fileType.startsWith('image/')) {
-        console.log('OCR parsing failed, attempting vision model fallback for image...');
-        return fallbackToVisionModel(
-          dataUrl,
-          invoiceId,
-          user.id,
-          supabase,
-          MISTRAL_API_KEY
-        );
-      } else {
-        // Create a minimal fallback record
-        extractedData = {
-          invoice_number: 'PARSE_ERROR',
-          vendor_name: 'Unknown Vendor',
-          total_amount: 0,
-          currency: 'USD',
-          error_details: 'OCR parsing failed: ' + (parseError instanceof Error ? parseError.message : String(parseError))
-        };
-      }
+      // Fallback to vision model for structured extraction
+      console.log('Annotation parsing failed, using vision model for structured extraction...');
+      return extractStructuredDataWithVision(
+        dataUrl,
+        '',
+        invoiceId,
+        user.id,
+        supabase,
+        MISTRAL_API_KEY
+      );
     }
     
     console.log('Extracted data:', extractedData);
@@ -426,15 +458,34 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Fallback function to use vision model if OCR API fails
-async function fallbackToVisionModel(
+// Function to extract structured data using vision model with optional OCR text
+async function extractStructuredDataWithVision(
   dataUrl: string,
+  ocrText: string,
   invoiceId: string,
   userId: string,
   supabase: any,
   apiKey: string
 ) {
   try {
+    const prompt = ocrText.trim()
+      ? `Based on this extracted text and the image, extract all invoice information and return it as JSON with these exact fields:
+        invoice_number, invoice_date, due_date, vendor_name, vendor_address, vendor_tax_id, customer_name, customer_address,
+        subtotal, tax_rate, tax_amount, discount_amount, total_amount, currency, payment_terms, payment_method,
+        line_items (array with description, quantity, unit_price, amount), notes,
+        bank_details (object with bank_name, account_number, routing_number, iban, swift).
+
+        OCR Text: ${ocrText}
+
+        Return only valid JSON.`
+      : `Extract all invoice information from this image and return it as JSON with these exact fields:
+        invoice_number, invoice_date, due_date, vendor_name, vendor_address, vendor_tax_id, customer_name, customer_address,
+        subtotal, tax_rate, tax_amount, discount_amount, total_amount, currency, payment_terms, payment_method,
+        line_items (array with description, quantity, unit_price, amount), notes,
+        bank_details (object with bank_name, account_number, routing_number, iban, swift).
+
+        Return only valid JSON.`;
+
     const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -449,7 +500,7 @@ async function fallbackToVisionModel(
             content: [
               {
                 type: 'text',
-                text: `Extract all invoice information from this image and return it as JSON with these fields: invoice_number, invoice_date, due_date, vendor_name, vendor_address, customer_name, customer_address, subtotal, tax_amount, total_amount, currency, line_items (array with description, quantity, unit_price, amount). Return only valid JSON.`
+                text: prompt
               },
               {
                 type: 'image_url',
@@ -461,7 +512,7 @@ async function fallbackToVisionModel(
           }
         ],
         temperature: 0.1,
-        max_tokens: 2000,
+        max_tokens: 3000,
         response_format: { type: 'json_object' }
       })
     });
@@ -473,227 +524,100 @@ async function fallbackToVisionModel(
     const data = await response.json();
     const extractedData = JSON.parse(data.choices[0].message.content);
 
-    // Store in database using flexible JSON approach
-    const { data: invoiceData } = await supabase
+    console.log('Structured data extracted:', extractedData);
+
+    // Calculate confidence score based on required fields presence (as decimal 0.0-1.0)
+    const requiredFields = ['invoice_number', 'total_amount', 'currency', 'vendor_name'];
+    const presentFields = requiredFields.filter(field => extractedData[field]);
+    const confidenceScore = presentFields.length / requiredFields.length;
+
+    // Store extracted data in database using flexible JSON approach
+    const { data: invoiceData, error: dbError } = await supabase
       .from('invoice_data')
       .insert({
         invoice_id: invoiceId,
         invoice_number: extractedData.invoice_number || 'Unknown',
         vendor_name: extractedData.vendor_name || 'Unknown Vendor',
+        total_amount: extractedData.total_amount || extractedData.total || extractedData.amount || 0,
+        subtotal: extractedData.subtotal || 0,
+        tax_amount: extractedData.tax_amount || extractedData.tax || 0,
         currency: extractedData.currency || 'USD',
+        invoice_date: extractedData.invoice_date || null,
+        due_date: extractedData.due_date || null,
+        customer_name: extractedData.customer_name || null,
+        customer_address: extractedData.customer_address || null,
+        vendor_address: extractedData.vendor_address || null,
+        payment_terms: extractedData.payment_terms || null,
         raw_ocr_data: extractedData, // Store all extracted data in JSON field
-        confidence_score: 0.75,
+        confidence_score: confidenceScore,
         is_verified: false
       })
       .select()
       .single();
 
+    if (dbError) {
+      console.error('Database error:', dbError);
+      throw new Error('Failed to save extracted data');
+    }
+
+    // Store line items if present
+    if (extractedData.line_items && Array.isArray(extractedData.line_items)) {
+      const lineItems = extractedData.line_items.map((item: any, index: number) => ({
+        invoice_data_id: invoiceData.id,
+        item_number: index + 1,
+        description: item.description || 'Item',
+        quantity: item.quantity || 1,
+        unit_price: item.unit_price || 0,
+        amount: item.amount || 0
+      }));
+
+      if (lineItems.length > 0) {
+        await supabase
+          .from('invoice_line_items')
+          .insert(lineItems);
+      }
+    }
+
+    // Update invoice status
     await supabase
       .from('invoices')
-      .update({ processing_status: 'completed', page_count: 1 })
+      .update({
+        processing_status: 'completed',
+        page_count: 1
+      })
       .eq('id', invoiceId)
       .eq('user_id', userId);
+
+    // Check and update user's usage
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('pages_used, pages_limit')
+      .eq('id', userId)
+      .single();
+
+    if (profile) {
+      await supabase
+        .from('profiles')
+        .update({
+          pages_used: (profile.pages_used || 0) + 1
+        })
+        .eq('id', userId);
+    }
 
     return NextResponse.json({
       success: true,
       data: {
         invoice_data_id: invoiceData.id,
         extracted: extractedData,
-        confidence_score: 0.75,
+        confidence_score: confidenceScore,
         pages_processed: 1,
-        method: 'vision_fallback'
+        method: ocrText.trim() ? 'ocr_plus_vision' : 'vision_only'
       }
     });
   } catch (error) {
+    console.error('Vision model extraction error:', error);
     throw error;
   }
 }
 
-// Helper function to parse OCR text into structured invoice data
-function parseTextToInvoiceData(text: string) {
-  const data: any = {};
 
-  // Handle empty or invalid text
-  if (!text || typeof text !== 'string' || text.trim().length === 0) {
-    console.log('Empty or invalid text provided to parseTextToInvoiceData');
-    return {
-      invoice_number: 'NO_TEXT_EXTRACTED',
-      vendor_name: 'Unknown Vendor',
-      total_amount: 0,
-      currency: 'USD',
-      error_details: 'No text content to parse'
-    };
-  }
-
-  const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-
-  // Extract invoice number - try multiple patterns
-  const invoicePatterns = [
-    /invoice\s*#?:?\s*([A-Z0-9-]+)/i,
-    /inv\s*#?:?\s*([A-Z0-9-]+)/i,
-    /invoice\s*number\s*:?\s*([A-Z0-9-]+)/i,
-    /document\s*#?:?\s*([A-Z0-9-]+)/i,
-    /#\s*([A-Z0-9-]+)/i
-  ];
-
-  for (const pattern of invoicePatterns) {
-    const match = text.match(pattern);
-    if (match) {
-      data.invoice_number = match[1];
-      break;
-    }
-  }
-
-  // Extract amounts - try multiple patterns
-  const amountPatterns = [
-    /total\s*:?\s*\$?([0-9,]+\.?[0-9]*)/gi,
-    /amount\s*:?\s*\$?([0-9,]+\.?[0-9]*)/gi,
-    /grand\s*total\s*:?\s*\$?([0-9,]+\.?[0-9]*)/gi,
-    /balance\s*:?\s*\$?([0-9,]+\.?[0-9]*)/gi,
-    /\$\s*([0-9,]+\.?[0-9]*)/g
-  ];
-
-  const amounts: number[] = [];
-  for (const pattern of amountPatterns) {
-    const matches = text.matchAll(pattern);
-    for (const match of matches) {
-      const amount = parseFloat(match[1].replace(/,/g, ''));
-      if (!isNaN(amount) && amount > 0) {
-        amounts.push(amount);
-      }
-    }
-  }
-
-  if (amounts.length > 0) {
-    data.total_amount = Math.max(...amounts); // Use highest amount as total
-  }
-
-  // Extract subtotal and tax
-  const subtotalMatch = text.match(/subtotal\s*:?\s*\$?([0-9,]+\.?[0-9]*)/i);
-  if (subtotalMatch) data.subtotal = parseFloat(subtotalMatch[1].replace(/,/g, ''));
-
-  const taxMatch = text.match(/tax\s*:?\s*\$?([0-9,]+\.?[0-9]*)/i);
-  if (taxMatch) data.tax_amount = parseFloat(taxMatch[1].replace(/,/g, ''));
-
-  // Extract dates - try multiple patterns
-  const datePatterns = [
-    /date\s*:?\s*([0-9]{1,2}[-\/][0-9]{1,2}[-\/][0-9]{2,4})/i,
-    /invoice\s*date\s*:?\s*([0-9]{1,2}[-\/][0-9]{1,2}[-\/][0-9]{2,4})/i,
-    /([0-9]{1,2}[-\/][0-9]{1,2}[-\/][0-9]{4})/g,
-    /([0-9]{4}[-\/][0-9]{1,2}[-\/][0-9]{1,2})/g
-  ];
-
-  for (const pattern of datePatterns) {
-    const match = text.match(pattern);
-    if (match) {
-      data.invoice_date = formatDate(match[1]);
-      break;
-    }
-  }
-
-  // Extract due date
-  const dueDateMatch = text.match(/due\s*date\s*:?\s*([0-9]{1,2}[-\/][0-9]{1,2}[-\/][0-9]{2,4})/i);
-  if (dueDateMatch) data.due_date = formatDate(dueDateMatch[1]);
-
-  // Extract vendor name - look for company-like patterns at the top
-  for (let i = 0; i < Math.min(5, lines.length); i++) {
-    const line = lines[i];
-    // Skip lines that look like headers or numbers
-    if (line.length > 3 &&
-        !line.match(/^[0-9\-\/\s]+$/) &&
-        !line.toLowerCase().includes('invoice') &&
-        !line.toLowerCase().includes('receipt') &&
-        !line.toLowerCase().includes('bill')) {
-      data.vendor_name = line;
-      break;
-    }
-  }
-
-  // Extract customer name - usually appears after "bill to" or "customer"
-  const customerMatch = text.match(/(?:bill\s*to|customer|client)\s*:?\s*([^\n]+)/i);
-  if (customerMatch) data.customer_name = customerMatch[1].trim();
-
-  // Extract addresses - look for address-like patterns
-  const addressPattern = /([0-9]+\s+[A-Za-z\s]+(?:street|st|avenue|ave|road|rd|lane|ln|drive|dr|blvd|boulevard)[^\n]*)/i;
-  const addressMatch = text.match(addressPattern);
-  if (addressMatch) data.vendor_address = addressMatch[1].trim();
-
-  // Determine currency from symbols in text
-  if (text.includes('€') || text.toLowerCase().includes('eur')) {
-    data.currency = 'EUR';
-  } else if (text.includes('£') || text.toLowerCase().includes('gbp')) {
-    data.currency = 'GBP';
-  } else if (text.includes('¥') || text.toLowerCase().includes('jpy')) {
-    data.currency = 'JPY';
-  } else {
-    data.currency = 'USD';
-  }
-
-  // Extract line items - look for table-like structures
-  const lineItems = extractLineItems(text);
-  if (lineItems.length > 0) {
-    data.line_items = lineItems;
-  }
-
-  // Extract payment terms
-  const paymentTermsMatch = text.match(/(?:payment\s*terms?|terms)\s*:?\s*([^\n]+)/i);
-  if (paymentTermsMatch) data.payment_terms = paymentTermsMatch[1].trim();
-
-  return data;
-}
-
-// Helper function to format dates consistently
-function formatDate(dateStr: string): string {
-  try {
-    // Try to parse and format the date
-    const date = new Date(dateStr.replace(/[-\/]/g, '/'));
-    if (!isNaN(date.getTime())) {
-      return date.toISOString().split('T')[0]; // Return YYYY-MM-DD format
-    }
-  } catch (e) {
-    // If parsing fails, return original string
-  }
-  return dateStr;
-}
-
-// Helper function to extract line items from text
-function extractLineItems(text: string): any[] {
-  const lineItems: any[] = [];
-  const lines = text.split('\n');
-
-  // Look for table-like structures with quantity, description, and amount
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-
-    // Pattern for: quantity | description | unit_price | amount
-    const itemPattern = /(\d+)\s+(.+?)\s+\$?([0-9,]+\.?\d*)\s+\$?([0-9,]+\.?\d*)/;
-    const match = line.match(itemPattern);
-
-    if (match) {
-      lineItems.push({
-        quantity: parseInt(match[1]),
-        description: match[2].trim(),
-        unit_price: parseFloat(match[3].replace(/,/g, '')),
-        amount: parseFloat(match[4].replace(/,/g, ''))
-      });
-    } else {
-      // Simpler pattern for: description | amount
-      const simplePattern = /(.+?)\s+\$?([0-9,]+\.?\d*)$/;
-      const simpleMatch = line.match(simplePattern);
-
-      if (simpleMatch && simpleMatch[2]) {
-        const amount = parseFloat(simpleMatch[2].replace(/,/g, ''));
-        if (amount > 0 && amount < (lineItems.length > 0 ? Math.max(...lineItems.map(item => item.amount || 0)) * 10 : 10000)) {
-          lineItems.push({
-            quantity: 1,
-            description: simpleMatch[1].trim(),
-            unit_price: amount,
-            amount: amount
-          });
-        }
-      }
-    }
-  }
-
-  return lineItems;
-}

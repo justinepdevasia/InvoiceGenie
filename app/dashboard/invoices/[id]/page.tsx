@@ -443,7 +443,7 @@ export default function InvoiceDetailPage() {
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
                 <h3 className="text-lg font-semibold">Processing Document...</h3>
                 <p className="text-muted-foreground mt-2">
-                  Extracting data with Mistral AI OCR
+                  Extracting structured data with Mistral Document Annotation
                 </p>
               </CardContent>
             </Card>
@@ -689,19 +689,162 @@ export default function InvoiceDetailPage() {
                 </CardContent>
               </Card>
 
-              {/* Raw OCR Data */}
+              {/* Enhanced Structured Data Display */}
               {showRawData && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Raw OCR Data</CardTitle>
+                    <CardTitle>Structured OCR Data</CardTitle>
                     <CardDescription>
-                      Original data extracted by Mistral AI
+                      Complete data extracted by Mistral Document Annotation
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <pre className="bg-gray-100 p-4 rounded overflow-auto max-h-96 text-xs">
-                      {JSON.stringify(invoiceData.raw_ocr_data, null, 2)}
-                    </pre>
+                    <Tabs defaultValue="structured" className="w-full">
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="structured">Structured View</TabsTrigger>
+                        <TabsTrigger value="raw">Raw JSON</TabsTrigger>
+                      </TabsList>
+
+                      <TabsContent value="structured" className="space-y-4">
+                        {invoiceData.raw_ocr_data && (
+                          <div className="grid gap-4">
+                            {/* Core Invoice Fields */}
+                            <div>
+                              <h4 className="text-sm font-semibold mb-3 text-blue-600">📄 Invoice Details</h4>
+                              <div className="grid grid-cols-2 gap-3 text-sm">
+                                <div className="bg-blue-50 p-2 rounded">
+                                  <span className="font-medium">Invoice Number:</span> {invoiceData.raw_ocr_data.invoice_number || 'N/A'}
+                                </div>
+                                <div className="bg-blue-50 p-2 rounded">
+                                  <span className="font-medium">Date:</span> {invoiceData.raw_ocr_data.invoice_date || 'N/A'}
+                                </div>
+                                <div className="bg-blue-50 p-2 rounded">
+                                  <span className="font-medium">Due Date:</span> {invoiceData.raw_ocr_data.due_date || 'N/A'}
+                                </div>
+                                <div className="bg-blue-50 p-2 rounded">
+                                  <span className="font-medium">Currency:</span> {invoiceData.raw_ocr_data.currency || 'N/A'}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Vendor Information */}
+                            <div>
+                              <h4 className="text-sm font-semibold mb-3 text-green-600">🏢 Vendor Information</h4>
+                              <div className="space-y-2 text-sm">
+                                <div className="bg-green-50 p-2 rounded">
+                                  <span className="font-medium">Name:</span> {invoiceData.raw_ocr_data.vendor_name || 'N/A'}
+                                </div>
+                                <div className="bg-green-50 p-2 rounded">
+                                  <span className="font-medium">Address:</span> {invoiceData.raw_ocr_data.vendor_address || 'N/A'}
+                                </div>
+                                <div className="bg-green-50 p-2 rounded">
+                                  <span className="font-medium">Tax ID:</span> {invoiceData.raw_ocr_data.vendor_tax_id || 'N/A'}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Customer Information */}
+                            <div>
+                              <h4 className="text-sm font-semibold mb-3 text-purple-600">👤 Customer Information</h4>
+                              <div className="space-y-2 text-sm">
+                                <div className="bg-purple-50 p-2 rounded">
+                                  <span className="font-medium">Name:</span> {invoiceData.raw_ocr_data.customer_name || 'N/A'}
+                                </div>
+                                <div className="bg-purple-50 p-2 rounded">
+                                  <span className="font-medium">Address:</span> {invoiceData.raw_ocr_data.customer_address || 'N/A'}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Financial Details */}
+                            <div>
+                              <h4 className="text-sm font-semibold mb-3 text-orange-600">💰 Financial Details</h4>
+                              <div className="grid grid-cols-2 gap-3 text-sm">
+                                <div className="bg-orange-50 p-2 rounded">
+                                  <span className="font-medium">Subtotal:</span> {invoiceData.raw_ocr_data.subtotal || 'N/A'}
+                                </div>
+                                <div className="bg-orange-50 p-2 rounded">
+                                  <span className="font-medium">Tax Rate:</span> {invoiceData.raw_ocr_data.tax_rate || 'N/A'}%
+                                </div>
+                                <div className="bg-orange-50 p-2 rounded">
+                                  <span className="font-medium">Tax Amount:</span> {invoiceData.raw_ocr_data.tax_amount || 'N/A'}
+                                </div>
+                                <div className="bg-orange-50 p-2 rounded">
+                                  <span className="font-medium">Discount:</span> {invoiceData.raw_ocr_data.discount_amount || 'N/A'}
+                                </div>
+                                <div className="bg-orange-100 p-2 rounded font-semibold">
+                                  <span className="font-bold">Total Amount:</span> {invoiceData.raw_ocr_data.total_amount || 'N/A'}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Payment Information */}
+                            <div>
+                              <h4 className="text-sm font-semibold mb-3 text-teal-600">💳 Payment Information</h4>
+                              <div className="space-y-2 text-sm">
+                                <div className="bg-teal-50 p-2 rounded">
+                                  <span className="font-medium">Payment Terms:</span> {invoiceData.raw_ocr_data.payment_terms || 'N/A'}
+                                </div>
+                                <div className="bg-teal-50 p-2 rounded">
+                                  <span className="font-medium">Payment Method:</span> {invoiceData.raw_ocr_data.payment_method || 'N/A'}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Bank Details */}
+                            {invoiceData.raw_ocr_data.bank_details && (
+                              <div>
+                                <h4 className="text-sm font-semibold mb-3 text-indigo-600">🏦 Bank Details</h4>
+                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                  {Object.entries(invoiceData.raw_ocr_data.bank_details).map(([key, value]) => (
+                                    value && (
+                                      <div key={key} className="bg-indigo-50 p-2 rounded">
+                                        <span className="font-medium">{key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</span> {value}
+                                      </div>
+                                    )
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Line Items */}
+                            {invoiceData.raw_ocr_data.line_items && invoiceData.raw_ocr_data.line_items.length > 0 && (
+                              <div>
+                                <h4 className="text-sm font-semibold mb-3 text-pink-600">📋 Line Items ({invoiceData.raw_ocr_data.line_items.length})</h4>
+                                <div className="space-y-2">
+                                  {invoiceData.raw_ocr_data.line_items.map((item: any, index: number) => (
+                                    <div key={index} className="bg-pink-50 p-3 rounded text-sm">
+                                      <div className="grid grid-cols-4 gap-2">
+                                        <div><span className="font-medium">Description:</span> {item.description}</div>
+                                        <div><span className="font-medium">Qty:</span> {item.quantity}</div>
+                                        <div><span className="font-medium">Unit Price:</span> {item.unit_price}</div>
+                                        <div><span className="font-medium">Amount:</span> {item.amount}</div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Notes */}
+                            {invoiceData.raw_ocr_data.notes && (
+                              <div>
+                                <h4 className="text-sm font-semibold mb-3 text-gray-600">📝 Notes</h4>
+                                <div className="bg-gray-50 p-2 rounded text-sm">
+                                  {invoiceData.raw_ocr_data.notes}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </TabsContent>
+
+                      <TabsContent value="raw">
+                        <pre className="bg-gray-100 p-4 rounded overflow-auto max-h-96 text-xs">
+                          {JSON.stringify(invoiceData.raw_ocr_data, null, 2)}
+                        </pre>
+                      </TabsContent>
+                    </Tabs>
                   </CardContent>
                 </Card>
               )}

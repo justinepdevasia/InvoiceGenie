@@ -2,17 +2,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-08-27.basil',
-});
-
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+function getStripe() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not configured');
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-08-27.basil',
+  });
+}
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.text();
     const sig = req.headers.get('stripe-signature')!;
 
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!endpointSecret) {
+      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
+    }
+
+    const stripe = getStripe();
     let event: Stripe.Event;
 
     try {
@@ -69,6 +78,7 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription, supab
     console.log('Handling subscription change:', subscription.id);
 
     // Get customer to find user
+    const stripe = getStripe();
     const customer = await stripe.customers.retrieve(subscription.customer as string);
     if (!customer || customer.deleted) {
       console.error('Customer not found or deleted');

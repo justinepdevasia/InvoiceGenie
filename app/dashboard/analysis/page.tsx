@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -45,7 +46,9 @@ import {
   CheckCircle,
   FileBarChart,
   Users,
-  Settings
+  Settings,
+  FileStack,
+  FolderOpen
 } from 'lucide-react'
 import { format, subMonths, startOfMonth, endOfMonth, parseISO, isValid } from 'date-fns'
 
@@ -151,14 +154,15 @@ export default function AnalysisPage() {
         }))
       }
 
-      // Fetch invoice data with projects
-      const { data: invoicesData } = await supabase
+      // Fetch invoice data with projects - try all statuses first
+      const { data: invoicesData, error } = await supabase
         .from('invoices')
         .select(`
           id,
           project_id,
+          processing_status,
           projects!inner(name),
-          invoice_data!inner(
+          invoice_data(
             id,
             invoice_number,
             vendor_name,
@@ -171,11 +175,19 @@ export default function AnalysisPage() {
           )
         `)
         .eq('user_id', user.id)
-        .eq('processing_status', 'completed')
 
-      if (invoicesData) {
+      console.log('Raw invoices data:', invoicesData)
+      console.log('Query error:', error)
+
+      if (invoicesData && invoicesData.length > 0) {
         const transformedData: InvoiceData[] = invoicesData
-          .filter(inv => inv.invoice_data && inv.projects)
+          .filter(inv => {
+            // Only include completed invoices with invoice data
+            return inv.processing_status === 'completed' &&
+                   inv.invoice_data &&
+                   (Array.isArray(inv.invoice_data) ? inv.invoice_data.length > 0 : inv.invoice_data) &&
+                   inv.projects
+          })
           .map(inv => {
             const invoiceData = Array.isArray(inv.invoice_data) ? inv.invoice_data[0] : inv.invoice_data
             const projectData = Array.isArray(inv.projects) ? inv.projects[0] : inv.projects
@@ -184,9 +196,9 @@ export default function AnalysisPage() {
               invoice_id: inv.id,
               invoice_number: invoiceData?.invoice_number || '',
               vendor_name: invoiceData?.vendor_name || 'Unknown',
-              total_amount: invoiceData?.total_amount || 0,
-              subtotal: invoiceData?.subtotal || 0,
-              tax_amount: invoiceData?.tax_amount || 0,
+              total_amount: Number(invoiceData?.total_amount) || 0,
+              subtotal: Number(invoiceData?.subtotal) || 0,
+              tax_amount: Number(invoiceData?.tax_amount) || 0,
               currency: invoiceData?.currency || 'USD',
               invoice_date: invoiceData?.invoice_date || '',
               payment_method: invoiceData?.raw_ocr_data?.payment_method || 'Unknown',
@@ -195,7 +207,17 @@ export default function AnalysisPage() {
               project_id: inv.project_id
             }
           })
+
+        console.log('Transformed data:', transformedData)
         setInvoiceData(transformedData)
+
+        // If no completed invoices, show a message
+        if (transformedData.length === 0) {
+          console.log('No completed invoices found. Total raw invoices:', invoicesData.length)
+        }
+      } else {
+        console.log('No invoice data returned from query')
+        setInvoiceData([])
       }
     } catch (error) {
       console.error('Error fetching data:', error)
@@ -681,6 +703,50 @@ export default function AnalysisPage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-600"></div>
+      </div>
+    )
+  }
+
+  // Show empty state if no data
+  if (!loading && filteredData.length === 0) {
+    return (
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <BarChart3 className="h-8 w-8 text-rose-500" />
+              Expense Analysis
+            </h1>
+            <p className="text-muted-foreground">Comprehensive insights into your spending patterns</p>
+          </div>
+        </div>
+
+        {/* Empty State */}
+        <Card className="text-center py-16">
+          <CardContent>
+            <BarChart3 className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+            <h3 className="text-xl font-semibold mb-2">No Analysis Data Available</h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              To see expense analysis, you need to upload and process some invoices first.
+              Go to the Documents section to upload your invoices.
+            </p>
+            <div className="flex gap-4 justify-center">
+              <Button asChild>
+                <Link href="/dashboard/invoices">
+                  <FileStack className="h-4 w-4 mr-2" />
+                  Upload Documents
+                </Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/dashboard/projects">
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  Create Project
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     )
   }

@@ -9,20 +9,21 @@ import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
 
 // Main Screens
-import DashboardScreen from '../screens/main/DashboardScreen';
-import ProjectsScreen from '../screens/main/ProjectsScreen';
-import ProjectDetailScreen from '../screens/main/ProjectDetailScreen';
-import DocumentsScreen from '../screens/main/DocumentsScreen';
-import DocumentDetailScreen from '../screens/main/DocumentDetailScreen';
-import AnalysisScreen from '../screens/main/AnalysisScreen';
+import DashboardScreen from '../screens/dashboard/DashboardScreen';
+import ProjectsScreen from '../screens/projects/ProjectsScreen';
+import ProjectDetailScreen from '../screens/projects/ProjectDetailScreen';
+import DocumentsScreen from '../screens/documents/DocumentsScreen';
+import DocumentDetailScreen from '../screens/documents/DocumentDetailScreen';
+import AnalysisScreen from '../screens/analysis/AnalysisScreen';
 import CameraScreen from '../screens/camera/CameraScreen';
-import SettingsScreen from '../screens/main/SettingsScreen';
+import SettingsScreen from '../screens/settings/SettingsScreen';
 
 // Components
 import LoadingScreen from '../components/LoadingScreen';
 
-// Icons (using simple text for now - would use icon library in production)
+// Icons
 import { Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -55,36 +56,66 @@ const MainTabNavigator = () => {
         name="Dashboard"
         component={DashboardScreen}
         options={{
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="📊" />,
-          title: 'Overview',
+          tabBarIcon: ({ focused, color }) => (
+            <Ionicons
+              name={focused ? "home" : "home-outline"}
+              size={24}
+              color={color}
+            />
+          ),
+          title: 'Home',
         }}
       />
       <Tab.Screen
         name="Projects"
         component={ProjectsScreen}
         options={{
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="📁" />,
+          tabBarIcon: ({ focused, color }) => (
+            <Ionicons
+              name={focused ? "folder" : "folder-outline"}
+              size={24}
+              color={color}
+            />
+          ),
         }}
       />
       <Tab.Screen
         name="Documents"
         component={DocumentsScreen}
         options={{
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="📄" />,
+          tabBarIcon: ({ focused, color }) => (
+            <Ionicons
+              name={focused ? "document-text" : "document-text-outline"}
+              size={24}
+              color={color}
+            />
+          ),
         }}
       />
       <Tab.Screen
         name="Analysis"
         component={AnalysisScreen}
         options={{
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="📈" />,
+          tabBarIcon: ({ focused, color }) => (
+            <Ionicons
+              name={focused ? "bar-chart" : "bar-chart-outline"}
+              size={24}
+              color={color}
+            />
+          ),
         }}
       />
       <Tab.Screen
         name="Settings"
         component={SettingsScreen}
         options={{
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="⚙️" />,
+          tabBarIcon: ({ focused, color }) => (
+            <Ionicons
+              name={focused ? "settings" : "settings-outline"}
+              size={24}
+              color={color}
+            />
+          ),
         }}
       />
     </Tab.Navigator>

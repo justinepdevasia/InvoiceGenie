@@ -8,10 +8,32 @@ const MISTRAL_OCR_URL = 'https://api.mistral.ai/v1/ocr';
 
 export async function POST(request: NextRequest) {
   let invoiceId: string | null = null;
-  
+
   try {
-    const supabase = await createClient();
-    
+    // Check for Bearer token in Authorization header (mobile app)
+    const authHeader = request.headers.get('authorization');
+    let supabase;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      // Mobile app authentication with Bearer token
+      const token = authHeader.substring(7);
+      const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
+      supabase = createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          global: {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        }
+      );
+    } else {
+      // Web browser authentication with cookies
+      supabase = await createClient();
+    }
+
     // Check authentication
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -367,10 +389,53 @@ export async function POST(request: NextRequest) {
     
     console.log('Extracted data:', extractedData);
 
+    // Validate that this is actually an invoice/receipt
+    // Check for critical fields and meaningful values
+    const hasVendorName = extractedData.vendor_name &&
+                          extractedData.vendor_name !== 'Not provided' &&
+                          extractedData.vendor_name !== 'Unknown' &&
+                          extractedData.vendor_name.trim().length > 0;
+
+    const hasAmount = extractedData.total_amount &&
+                      extractedData.total_amount > 0;
+
+    const hasInvoiceNumber = extractedData.invoice_number &&
+                            extractedData.invoice_number !== 'Not provided' &&
+                            extractedData.invoice_number.trim().length > 0;
+
+    // If none of the critical fields are present, this is likely not an invoice
+    if (!hasVendorName && !hasAmount && !hasInvoiceNumber) {
+      console.error('Document does not appear to be a valid invoice or receipt');
+
+      await supabase
+        .from('invoices')
+        .update({
+          processing_status: 'failed',
+          error_message: 'This does not appear to be an invoice or receipt. Please upload a valid document.'
+        })
+        .eq('id', invoiceId)
+        .eq('user_id', user.id);
+
+      return NextResponse.json({
+        success: false,
+        error: 'Invalid document type',
+        details: 'This does not appear to be an invoice or receipt. Please upload a document that contains invoice information (vendor name, amounts, invoice number, etc.)'
+      }, { status: 400 });
+    }
+
     // Calculate confidence score based on required fields presence (as decimal 0.0-1.0)
     const requiredFields = ['invoice_number', 'total_amount', 'currency', 'vendor_name'];
-    const presentFields = requiredFields.filter(field => extractedData[field]);
+    const presentFields = requiredFields.filter(field =>
+      extractedData[field] &&
+      extractedData[field] !== 'Not provided' &&
+      String(extractedData[field]).trim().length > 0
+    );
     const confidenceScore = presentFields.length / requiredFields.length;
+
+    // Warn if confidence is too low
+    if (confidenceScore < 0.5) {
+      console.warn('Low confidence score:', confidenceScore);
+    }
 
     // Store extracted data in database using flexible JSON approach
     const { data: invoiceData, error: dbError } = await supabase

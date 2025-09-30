@@ -7,13 +7,13 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "primaryColor": "#6366F1",
+    "primaryColor": "#1E88E5",
     "description": "Professional invoice management and OCR processing mobile app",
     "entryPoint": "index.ts",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#6366F1"
+      "backgroundColor": "#1E88E5"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -31,7 +31,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#6366F1"
+        "backgroundColor": "#1E88E5"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,

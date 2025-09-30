@@ -119,9 +119,9 @@ export const Button: React.FC<ButtonProps> = ({
           color={getTextStyle().color}
           style={{ marginHorizontal: theme.spacing.xs }}
         />
-      ) : (
+      ) : title ? (
         <Text style={[getTextStyle(), textStyle]}>{title}</Text>
-      )}
+      ) : null}
       {icon && iconPosition === 'right' && (
         <Ionicons
           name={icon}

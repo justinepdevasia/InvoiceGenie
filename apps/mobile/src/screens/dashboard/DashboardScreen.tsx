@@ -231,10 +231,15 @@ const DashboardScreen = ({ navigation }: any) => {
       position: 'absolute',
       bottom: theme.spacing.xl,
       right: theme.spacing.lg,
-      width: 60,
-      height: 60,
-      borderRadius: 30,
       ...theme.shadows.lg,
+    },
+    fab: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      justifyContent: 'center',
+      alignItems: 'center',
+      overflow: 'hidden',
     },
   });
 
@@ -250,7 +255,7 @@ const DashboardScreen = ({ navigation }: any) => {
         <View style={styles.headerContent}>
           <View style={styles.logoContainer}>
             <Ionicons name="document-text" size={40} color="#FFFFFF" />
-            <Text style={styles.logoText}>Expensa</Text>
+            <Text style={styles.logoText}>InvoiceGenie</Text>
           </View>
         </View>
       </LinearGradient>
@@ -311,18 +316,19 @@ const DashboardScreen = ({ navigation }: any) => {
 
       {/* Floating Action Button */}
       <View style={styles.floatingAction}>
-        <Button
-          title=""
+        <TouchableOpacity
           onPress={() => navigation.navigate('Camera')}
-          gradient
-          style={{
-            width: 60,
-            height: 60,
-            borderRadius: 30,
-            paddingHorizontal: 0,
-          }}
-          icon="camera"
-        />
+          style={styles.fab}
+          activeOpacity={0.8}
+        >
+          <LinearGradient
+            colors={[theme.colors.gradientStart, theme.colors.gradientEnd]}
+            style={StyleSheet.absoluteFill}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+          />
+          <Ionicons name="camera" size={28} color="#FFFFFF" />
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );

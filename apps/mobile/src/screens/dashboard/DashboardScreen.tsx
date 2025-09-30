@@ -227,20 +227,6 @@ const DashboardScreen = ({ navigation }: any) => {
       fontSize: theme.fontSize.xs,
       color: theme.colors.textTertiary,
     },
-    floatingAction: {
-      position: 'absolute',
-      bottom: theme.spacing.xl,
-      right: theme.spacing.lg,
-      ...theme.shadows.lg,
-    },
-    fab: {
-      width: 64,
-      height: 64,
-      borderRadius: 32,
-      justifyContent: 'center',
-      alignItems: 'center',
-      overflow: 'hidden',
-    },
   });
 
   return (
@@ -313,23 +299,6 @@ const DashboardScreen = ({ navigation }: any) => {
           ))}
         </Card>
       </ScrollView>
-
-      {/* Floating Action Button */}
-      <View style={styles.floatingAction}>
-        <TouchableOpacity
-          onPress={() => navigation.navigate('Camera')}
-          style={styles.fab}
-          activeOpacity={0.8}
-        >
-          <LinearGradient
-            colors={[theme.colors.gradientStart, theme.colors.gradientEnd]}
-            style={StyleSheet.absoluteFill}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-          />
-          <Ionicons name="camera" size={28} color="#FFFFFF" />
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 };

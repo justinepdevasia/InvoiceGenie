@@ -61,51 +61,51 @@ const LoginScreen = ({ navigation }: any) => {
     },
     header: {
       alignItems: 'center',
-      marginBottom: theme.spacing.xxl,
-      paddingTop: theme.spacing.xxl,
+      marginBottom: theme.spacing.lg,
+      paddingTop: theme.spacing.lg,
     },
     logoContainer: {
-      width: 80,
-      height: 80,
+      width: 64,
+      height: 64,
       borderRadius: theme.borderRadius.xl,
       backgroundColor: 'rgba(255, 255, 255, 0.2)',
       justifyContent: 'center',
       alignItems: 'center',
-      marginBottom: theme.spacing.lg,
+      marginBottom: theme.spacing.sm,
       ...theme.shadows.lg,
     },
     logoIcon: {
-      marginBottom: 4,
+      marginBottom: 2,
     },
     title: {
-      fontSize: theme.fontSize.xxxl,
+      fontSize: theme.fontSize.xxl,
       fontWeight: theme.fontWeight.bold,
       color: '#FFFFFF',
       textAlign: 'center',
-      marginBottom: theme.spacing.sm,
+      marginBottom: theme.spacing.xs,
     },
     subtitle: {
-      fontSize: theme.fontSize.lg,
+      fontSize: theme.fontSize.md,
       color: 'rgba(255, 255, 255, 0.8)',
       textAlign: 'center',
-      lineHeight: 24,
+      lineHeight: 20,
     },
     formCard: {
-      marginTop: theme.spacing.xl,
+      marginTop: theme.spacing.md,
       backgroundColor: 'rgba(255, 255, 255, 0.95)',
       borderRadius: theme.borderRadius.xl,
-      padding: theme.spacing.xl,
+      padding: theme.spacing.lg,
       ...theme.shadows.lg,
     },
     formTitle: {
-      fontSize: theme.fontSize.xxl,
+      fontSize: theme.fontSize.xl,
       fontWeight: theme.fontWeight.bold,
       color: theme.colors.text,
       textAlign: 'center',
-      marginBottom: theme.spacing.xl,
+      marginBottom: theme.spacing.lg,
     },
     inputContainer: {
-      marginBottom: theme.spacing.md,
+      marginBottom: theme.spacing.sm,
     },
     forgotPassword: {
       alignSelf: 'flex-end',
@@ -118,12 +118,12 @@ const LoginScreen = ({ navigation }: any) => {
       fontWeight: theme.fontWeight.medium,
     },
     signInButton: {
-      marginBottom: theme.spacing.lg,
+      marginBottom: theme.spacing.md,
     },
     divider: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginVertical: theme.spacing.lg,
+      marginVertical: theme.spacing.md,
     },
     dividerLine: {
       flex: 1,
@@ -139,7 +139,7 @@ const LoginScreen = ({ navigation }: any) => {
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',
-      marginTop: theme.spacing.lg,
+      marginTop: theme.spacing.md,
     },
     signUpText: {
       color: theme.colors.textSecondary,
@@ -150,17 +150,6 @@ const LoginScreen = ({ navigation }: any) => {
       fontSize: theme.fontSize.md,
       fontWeight: theme.fontWeight.semibold,
       marginLeft: theme.spacing.xs,
-    },
-    themeToggle: {
-      position: 'absolute',
-      top: 60,
-      right: theme.spacing.lg,
-      width: 44,
-      height: 44,
-      borderRadius: 22,
-      backgroundColor: 'rgba(255, 255, 255, 0.2)',
-      justifyContent: 'center',
-      alignItems: 'center',
     },
     bottomDecoration: {
       position: 'absolute',
@@ -185,16 +174,6 @@ const LoginScreen = ({ navigation }: any) => {
       {/* Decorative elements */}
       <View style={styles.bottomDecoration} />
 
-      {/* Theme toggle */}
-      <View style={styles.themeToggle}>
-        <Ionicons
-          name={isDark ? 'sunny' : 'moon'}
-          size={24}
-          color="white"
-          onPress={toggleTheme}
-        />
-      </View>
-
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -208,7 +187,7 @@ const LoginScreen = ({ navigation }: any) => {
             <View style={styles.logoContainer}>
               <Ionicons
                 name="receipt"
-                size={40}
+                size={32}
                 color="white"
                 style={styles.logoIcon}
               />

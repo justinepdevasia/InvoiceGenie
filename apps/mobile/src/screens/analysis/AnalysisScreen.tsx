@@ -431,7 +431,7 @@ const AnalysisScreen = () => {
     progressBar: {
       height: 6,
       backgroundColor: `${theme.colors.primary}20`,
-      borderRadius: theme.borderRadius.full,
+      borderRadius: theme.borderRadius.round,
       marginTop: theme.spacing.xs,
       overflow: 'hidden',
     },

@@ -6,7 +6,7 @@ import type {
   MonthlyExpenseData,
   VendorExpense,
   ProjectExpense
-} from '../../../packages/shared-types';
+} from '@expensa/shared-types';
 
 export const useAnalytics = () => {
   const { user } = useAuth();

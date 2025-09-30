@@ -93,7 +93,6 @@ const LoginScreen = ({ navigation }: any) => {
     formCard: {
       marginTop: theme.spacing.xl,
       backgroundColor: 'rgba(255, 255, 255, 0.95)',
-      backdropFilter: 'blur(20px)',
       borderRadius: theme.borderRadius.xl,
       padding: theme.spacing.xl,
       ...theme.shadows.lg,

@@ -1,6 +1,12 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@expensa/shared-types": ["../../packages/shared-types/index.ts"],
+      "@expensa/shared-utils": ["../../packages/shared-utils/index.ts"],
+      "@expensa/shared-api-client": ["../../packages/shared-api-client/index.ts"]
+    }
   }
 }

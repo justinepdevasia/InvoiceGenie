@@ -50,11 +50,11 @@ export interface Theme {
     xxxl: number;
   };
   fontWeight: {
-    light: string;
-    regular: string;
-    medium: string;
-    semibold: string;
-    bold: string;
+    light: '300';
+    regular: '400';
+    medium: '500';
+    semibold: '600';
+    bold: '700';
   };
   shadows: {
     sm: {

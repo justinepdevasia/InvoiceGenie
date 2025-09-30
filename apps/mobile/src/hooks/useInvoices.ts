@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import type { Invoice, InvoiceData } from '../../../packages/shared-types';
+import type { Invoice, InvoiceData } from '@expensa/shared-types';
 
 export const useInvoices = () => {
   const { user } = useAuth();

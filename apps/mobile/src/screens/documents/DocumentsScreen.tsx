@@ -120,7 +120,7 @@ const DocumentsScreen = ({ navigation }: any) => {
     filterChip: {
       paddingHorizontal: theme.spacing.md,
       paddingVertical: theme.spacing.xs,
-      borderRadius: theme.borderRadius.full,
+      borderRadius: theme.borderRadius.round,
       backgroundColor: theme.colors.background,
       borderWidth: 1,
       borderColor: theme.colors.border,

@@ -107,6 +107,7 @@ export default function SignupPage() {
                   onChange={(e) => setFullName(e.target.value)}
                   required
                   disabled={loading}
+                  autoComplete="name"
                 />
               </div>
               <div className="space-y-2">
@@ -119,6 +120,7 @@ export default function SignupPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={loading}
+                  autoComplete="email"
                 />
               </div>
               <div className="space-y-2">
@@ -131,6 +133,7 @@ export default function SignupPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={loading}
+                  autoComplete="new-password"
                 />
               </div>
               <div className="space-y-2">
@@ -143,6 +146,7 @@ export default function SignupPage() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   disabled={loading}
+                  autoComplete="new-password"
                 />
               </div>
               <div className="text-xs text-muted-foreground">

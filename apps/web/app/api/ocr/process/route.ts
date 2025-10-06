@@ -6,6 +6,18 @@ import { checkUsageLimit, incrementUsage } from '@/lib/usage';
 const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY;
 const MISTRAL_OCR_URL = 'https://api.mistral.ai/v1/ocr';
 
+// CORS headers for mobile app
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+// Handle OPTIONS request for CORS preflight
+export async function OPTIONS(request: NextRequest) {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
+
 export async function POST(request: NextRequest) {
   let invoiceId: string | null = null;
 
@@ -37,7 +49,7 @@ export async function POST(request: NextRequest) {
     // Check authentication
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders });
     }
 
     // Check usage limits before processing
@@ -49,7 +61,7 @@ export async function POST(request: NextRequest) {
         remaining: usageCheck.remaining,
         limit: usageCheck.limit,
         upgrade_required: true
-      }, { status: 429 });
+      }, { status: 429, headers: corsHeaders });
     }
 
     const requestData = await request.json();
@@ -59,14 +71,14 @@ export async function POST(request: NextRequest) {
     if (!invoiceId) {
       return NextResponse.json(
         { error: 'Missing invoice ID' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
     if (!base64Data && !filePath) {
       return NextResponse.json(
         { error: 'Missing file data' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
@@ -74,7 +86,7 @@ export async function POST(request: NextRequest) {
       console.error('Mistral API key not configured');
       return NextResponse.json(
         { error: 'OCR service not configured' },
-        { status: 500 }
+        { status: 500, headers: corsHeaders }
       );
     }
 
@@ -167,7 +179,7 @@ export async function POST(request: NextRequest) {
           error: 'Unsupported file type', 
           details: `File type "${fileType}" is not supported. Please upload PDF or image files (PNG, JPG, JPEG, GIF, WebP).` 
         },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
     
@@ -420,7 +432,7 @@ export async function POST(request: NextRequest) {
         success: false,
         error: 'Invalid document type',
         details: 'This does not appear to be an invoice or receipt. Please upload a document that contains invoice information (vendor name, amounts, invoice number, etc.)'
-      }, { status: 400 });
+      }, { status: 400, headers: corsHeaders });
     }
 
     // Calculate confidence score based on required fields presence (as decimal 0.0-1.0)
@@ -555,7 +567,7 @@ export async function POST(request: NextRequest) {
         confidence_score: confidenceScore,
         pages_processed: 1
       }
-    });
+    }, { headers: corsHeaders });
 
   } catch (error) {
     console.error('OCR processing error:', error);
@@ -580,7 +592,7 @@ export async function POST(request: NextRequest) {
         error: 'OCR processing failed', 
         details: error instanceof Error ? error.message : 'Unknown error' 
       },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }
